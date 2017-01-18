@@ -1,0 +1,22 @@
+Person (User):
+    {
+        id,
+        first-name,
+        last-name,
+        username,
+        email,
+        password,
+        events
+    }
+
+
+Event:
+    {
+        id,
+        title,
+        from (Date),
+        until (Date),
+        notes,
+        location,
+        people
+    }
