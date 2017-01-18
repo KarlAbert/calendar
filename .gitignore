@@ -1,0 +1,11 @@
+calendar/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+calendar/.idea
+*.iws
+*.iml
+*.ipr
+
+FrontEnd/node_modules
+FrontEnd/.vscode
