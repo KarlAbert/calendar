@@ -1,11 +1,9 @@
 package de.calendar;
 
 import org.json.JSONObject;
-import sun.security.util.PendingException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,34 +15,37 @@ import java.net.URL;
  */
 public class TestUtils {
 
-    public static String DOMAIN = "http://localhost:8080";
+    private static String DOMAIN = "http://localhost:8080";
+    private static String testUsername = "TestUser1";
+    private static String testUserPassword = "Password1";
 
-    public static Response post(String domain, String stringUrl, String token, JSONObject data) {
-        if(!stringUrl.contains("?")) {
-            stringUrl += "?";
-        }
-        return post(domain, stringUrl + "token=" + token, data);
+    public static Response post(String stringUrl, String token, JSONObject data) {
+        stringUrl += !stringUrl.contains("?") ? "?" : "&";
+        stringUrl += "token=";
+        stringUrl += token;
+
+        return post(stringUrl, data);
     }
 
-    public static Response post(String domain, String stringURL, JSONObject data) {
+    public static Response post(String stringURL, JSONObject data) {
         try {
-            URL url = new URL(domain + stringURL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            //post Data
+            HttpURLConnection connection = (HttpURLConnection) new URL(DOMAIN + stringURL).openConnection();
             connection.setRequestMethod("POST");
-            connection.setRequestProperty("Data", data.toString());
+            if (data != null) {
+                connection.setRequestProperty("Data", data.toString());
+            }
 
             //Get Response
-            InputStream is = connection.getInputStream();
-            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-            StringBuilder responseBody = new StringBuilder(); // or StringBuffer if Java version 5+
-            String line;
-            while ((line = rd.readLine()) != null) {
-                responseBody.append(line);
-                responseBody.append('\r');
+            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String responseBody = "", line;
+            while ((line = br.readLine()) != null) {
+                responseBody += line;
+                responseBody += '\r';
             }
-            rd.close();
+            br.close();
 
-            return new Response(connection.getResponseCode(), responseBody.toString());
+            return new Response(connection.getResponseCode(), responseBody);
         } catch (IOException e) {
             //e.printStackTrace();
             /*if(e.getCause().getClass().equals(ConnectException.class)) {
@@ -54,11 +55,18 @@ public class TestUtils {
         }
     }
 
-    public static String checkToken(String token) {
+    public static String tryLogin(String token) {
         if (token == null) {
-            throw new PendingException();
-            //return token;
+            login(testUsername, testUserPassword);
         }
         return token;
+    }
+
+    public static Response login(String username, String password) {
+        JSONObject data = new JSONObject()
+                .put("username", username)
+                .put("password", password);
+
+        return TestUtils.post("/login", data);
     }
 }

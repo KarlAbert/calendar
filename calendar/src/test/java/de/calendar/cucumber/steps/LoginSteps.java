@@ -1,8 +1,14 @@
 package de.calendar.cucumber.steps;
 
-import cucumber.api.PendingException;
 import cucumber.api.java.de.Dann;
 import cucumber.api.java.de.Wenn;
+import de.calendar.Response;
+import de.calendar.TestUtils;
+import org.json.JSONObject;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * calendar:
@@ -11,21 +17,23 @@ import cucumber.api.java.de.Wenn;
  */
 public class LoginSteps {
 
+    private Response response;
+
     @Wenn("^man sich mit dem Benutzername \"([^\"]*)\" und dem Passwort \"([^\"]*)\" anmeldet$")
     public void manSichMitDemBenutzernameUndDemPasswortAnmeldet(String username, String password) throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+        response = TestUtils.login(username, password);
     }
 
     @Dann("^wird der Zugriff verweigert$")
     public void wirdIhmDerZugriffVerweigert() throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+        assertThat(response.getStatus(), is(403));
     }
 
     @Dann("^wird der Zugriff gewährt$")
     public void wirdDerZugriffGewährt() throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+        JSONObject responseData = response.getJSONObject();
+
+        assertTrue("Wrong Response Format", responseData.has("token") && responseData.has("expiring"));
+        assertThat(response.getStatus(), is(200));
     }
 }

@@ -1,5 +1,6 @@
 package de.calendar;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,11 +26,19 @@ public class Response {
         return data;
     }
 
-    public JSONObject getJSONData() {
+    public JSONObject getJSONObject() {
         try {
             return new JSONObject(data);
         } catch (JSONException e) {
-            return new JSONObject();
+            return null;
+        }
+    }
+
+    public JSONArray getJSONArray() {
+        try {
+            return new JSONArray(data);
+        } catch (JSONException e) {
+            return null;
         }
     }
 }

@@ -32,7 +32,7 @@ public class RegisterSteps {
                 .put("email", data.get(3))
                 .put("password", data.get(4));
 
-        TestUtils.post("http://localhost:8080/", "register", json);
+        TestUtils.post("register", json);
     }
     //endregion
 
@@ -48,7 +48,7 @@ public class RegisterSteps {
                 .put("email", data.get(3))
                 .put("password", data.get(4));
 
-        this.response = TestUtils.post(TestUtils.DOMAIN, "/register", json);
+        this.response = TestUtils.post("/register", json);
     }
     //endregion
 

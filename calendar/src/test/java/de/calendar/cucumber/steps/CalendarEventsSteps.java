@@ -7,10 +7,14 @@ import cucumber.api.java.de.Wenn;
 import de.calendar.Response;
 import de.calendar.TestUtils;
 import org.json.JSONObject;
+import org.junit.Assert;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * calendar:
@@ -76,17 +80,26 @@ public class CalendarEventsSteps {
 
     @Dann("^steht das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalender von TestUser$")
     public void stehtDasEreignisAmInDemKalenderVonTestUser(String title, String dateString) throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
+        assertThat(response.getStatus(), is(200));
+
+        Response contains = getEvents(dateString, dateString);
+        Assert.fail("implement assertion");
     }
+
+    private Response getEvents(String fromString, String untilString) {
+        token = TestUtils.tryLogin(token);
+        String url = String.format("/event?from=%s&until%s", fromString, untilString);
+        return TestUtils.post(url, token, null);
+    }
+
     //endregion
     private Response createDaylongEvent(String title, String dateString) {
-        token = TestUtils.checkToken(token);
+        token = TestUtils.tryLogin(token);
 
         JSONObject json = new JSONObject()
                 .put("datum", dateString)
                 .put("titel", title);
-        return TestUtils.post(TestUtils.DOMAIN, "/event/create", token, json);
+        return TestUtils.post("/event/create", token, json);
     }
     //endregion
 
