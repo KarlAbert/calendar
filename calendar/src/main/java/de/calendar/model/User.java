@@ -2,11 +2,10 @@ package de.calendar.model;
 
 import org.json.JSONObject;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created User in de.calendar.model
@@ -35,15 +34,33 @@ public class User {
     @Size(min = 8)
     private String password;
 
+    @Embedded
+    private Token token;
+
+    @OneToMany(targetEntity = Event.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Event> events;
+
     public User() {
     }
 
+    public User(String firstname, String lastname, String username, String email, String password) {
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+
+        this.events = new ArrayList<>();
+    }
+
     public User(JSONObject data) {
-        this.firstname = data.getString("firstname");
-        this.lastname = data.getString("lastname");
-        this.username = data.getString("username");
-        this.email = data.getString("email");
-        this.password = data.getString("password");
+        this(
+                data.getString("firstname"),
+                data.getString("lastname"),
+                data.getString("username"),
+                data.getString("email"),
+                data.getString("password")
+        );
     }
 
     public String getFirstname() {
@@ -64,5 +81,17 @@ public class User {
 
     public String getPassword() {
         return password;
+    }
+
+    public Token getToken() {
+        return token;
+    }
+
+    public void setToken(Token token) {
+        this.token = token;
+    }
+
+    public List<Event> getEvents() {
+        return events;
     }
 }

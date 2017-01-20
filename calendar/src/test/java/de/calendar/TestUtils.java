@@ -3,6 +3,7 @@ package de.calendar;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -49,7 +50,8 @@ public class TestUtils {
             if (!DOMAIN.endsWith("/") && !stringURL.startsWith("/")) {
                 stringURL = "/" + stringURL;
             }
-            HttpURLConnection connection = (HttpURLConnection) new URL(DOMAIN + stringURL).openConnection();
+            String url = DOMAIN + stringURL;
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(httpMethod);
             if (data != null) {
                 connection.setRequestProperty("Data", data.toString());
@@ -57,8 +59,9 @@ public class TestUtils {
 
             //Get Response
             BufferedReader br;
-            //System.out.println(connection.getResponseCode());
-            if (connection.getResponseCode() <= 200 || connection.getResponseCode() >= 300) {
+            if (connection.getResponseCode() == 404) {
+                throw new FileNotFoundException(String.format("Die Datei %s konnte nicht gefunden werden.", stringURL));
+            } else if ((connection.getResponseCode() < 200 || connection.getResponseCode() >= 300)) {
                 br = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
             } else {
                 br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -71,17 +74,14 @@ public class TestUtils {
             br.close();
             return new Response(connection.getResponseCode(), responseBody);
         } catch (IOException e) {
-            //e.printStackTrace();
-            /*if(e.getCause().getClass().equals(ConnectException.class)) {
-                throw new RuntimeException(e);
-            }*/
             throw new RuntimeException(e);
         }
     }
 
     public static String tryLogin(String token) {
         if (token == null) {
-            login(testUsername, testUserPassword);
+            JSONObject jsonObject = login(testUsername, testUserPassword).getJSONObject();
+            token = jsonObject.getString("token");
         }
         return token;
     }

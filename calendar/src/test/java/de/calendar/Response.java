@@ -30,7 +30,7 @@ public class Response {
         try {
             return new JSONObject(data);
         } catch (JSONException e) {
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -38,7 +38,7 @@ public class Response {
         try {
             return new JSONArray(data);
         } catch (JSONException e) {
-            return null;
+            throw new RuntimeException(e);
         }
     }
 }

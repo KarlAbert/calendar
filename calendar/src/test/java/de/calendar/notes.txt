@@ -14,8 +14,8 @@ Event:
     {
         id,
         title,
-        from (Date),
-        until (Date),
+        start (Date),
+        end (Date),
         notes,
         location,
         people

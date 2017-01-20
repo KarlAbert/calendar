@@ -13,82 +13,82 @@ import static org.junit.Assert.assertThat;
  */
 public class RegisterControllerTest {
     /**
-     * Spezifiziert das Verhalten von {@link RegisterController#validate(JSONObject)}.
+     * Spezifiziert das Verhalten von {@link RegisterController#valid(JSONObject)}.
      */
     @Test
     public void validatesDataPost() {
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "Stulken")
                 .put("username", "arstulke")
                 .put("email", "arne@example.com")
                 .put("password", "Test1234")
-        ), is(nullValue()));
+        ), is(true));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arnedewiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
                 .put("lastname", "Stulken")
                 .put("username", "arstulke")
                 .put("email", "arne@example.com")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "")
                 .put("lastname", "Stulken")
                 .put("username", "arstulke")
                 .put("email", "arne@example.com")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
 
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "")
                 .put("username", "arstulke")
                 .put("email", "arne@example.com")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "Stulken")
                 .put("username", "ar")
                 .put("email", "arne@example.com")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "Stulken")
                 .put("username", "arstulke")
                 .put("email", "arne_example.com")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "Stulken")
                 .put("username", "arstulke")
                 .put("email", "")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "Stulken")
                 .put("username", "arstulke")
                 .put("email", "arne@example.com")
                 .put("password", "zukurz")
-        ), is(notNullValue()));
+        ), is(false));
 
-        assertThat(validate(new JSONObject()
+        assertThat(valid(new JSONObject()
                 .put("username", "arstulke")
                 .put("password", "Test1234")
-        ), is(notNullValue()));
+        ), is(false));
     }
 
-    private String validate(JSONObject jsonObject) {
-        return RegisterController.validate(jsonObject);
+    private boolean valid(JSONObject jsonObject) {
+        return RegisterController.valid(jsonObject);
     }
 }

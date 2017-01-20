@@ -3,10 +3,12 @@ package de.calendar.cucumber.steps;
 import cucumber.api.java.de.Dann;
 import cucumber.api.java.de.Gegebensei;
 import cucumber.api.java.de.Wenn;
-import de.calendar.Response;
 import de.calendar.CalendarTestUtils;
+import de.calendar.Response;
 import de.calendar.model.Event;
+import de.calendar.utils.CalendarUtils;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.Map;
 
@@ -21,15 +23,19 @@ import static org.junit.Assert.*;
  */
 public class CalendarEventsSteps {
     private String token;
-    private Response containsResponse;
+    private Response saveResponse;
     private JSONArray arr;
+    private int eventCount;
 
     //region ganztägig
     //region gegeben sei
     @Gegebensei("^das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalendar von TestUser$")
     public void dasEreignisAmInDemKalendarVonTestUser(String title, String dateString) throws Throwable {
         token = tryLogin(token);
-        CalendarTestUtils.createDaylongEvent(title, dateString, token);
+        Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, dateString + " 00:00", dateString + " 23:59", token);
+        if (event == null) {
+            CalendarTestUtils.createDaylongEvent(title, dateString, token);
+        }
     }
     //endregion
 
@@ -38,7 +44,9 @@ public class CalendarEventsSteps {
     public void testuserDasEreignisAmLöscht(String title, String dateString) throws Throwable {
         token = tryLogin(token);
         Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, dateString + " 00:00", dateString + " 23:59", token);
-        CalendarTestUtils.deleteEvent(event, token);
+
+        this.eventCount = CalendarTestUtils.findAllEventsByDate(dateString, dateString, token).length();
+        this.saveResponse = CalendarTestUtils.deleteEvent(event, token);
     }
 
     @Wenn("^TestUser das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" zu \"([^\"]*)\" am \"([^\"]*)\" ändert$")
@@ -50,22 +58,22 @@ public class CalendarEventsSteps {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         }
         event.setTitle(title2);
-        event.setFrom(dateString2 + " 00:00");
-        event.setUntil(dateString2 + " 23:59");
+        event.setStartString(dateString2 + " 00:00");
+        event.setEndString(dateString2 + " 23:59");
 
-        CalendarTestUtils.saveEvent(event, token);
+        this.saveResponse = CalendarTestUtils.saveEvent(event, token);
     }
 
     @Wenn("^TestUser die Ereignisse zwischen dem \"([^\"]*)\" und dem \"([^\"]*)\" anzeigen lässt$")
-    public void testuserDieEreignisseZwischenDemUndDemAnzeigenLässt(String fromString, String untilString) throws Throwable {
+    public void testuserDieEreignisseZwischenDemUndDemAnzeigenLässt(String from, String until) throws Throwable {
         token = tryLogin(token);
-        arr = CalendarTestUtils.findAllEventsByDate(fromString + " 00:00", untilString + " 23:59", token);
+        arr = CalendarTestUtils.findAllEventsByDate(from + " 00:00", until + " 23:59", token);
     }
 
     @Wenn("^TestUser ein ganztägiges Ereigniss am \"([^\"]*)\" mit dem Titel \"([^\"]*)\" erstellt$")
     public void testuserEinEreignissAmMitDemTitelErstellt(String dateString, String title) throws Throwable {
         token = tryLogin(token);
-        this.containsResponse = CalendarTestUtils.createDaylongEvent(title, dateString, token);
+        this.saveResponse = CalendarTestUtils.createDaylongEvent(title, dateString, token);
     }
     //endregion
 
@@ -73,7 +81,12 @@ public class CalendarEventsSteps {
     @Dann("^existiert kein Ereignis am \"([^\"]*)\" im Kalendar von TestUser$")
     public void existiertKeinEreignisAmImKalendarVonTestUser(String dateString) throws Throwable {
         token = tryLogin(token);
-        assertThat(CalendarTestUtils.findAllEventsByDate(dateString, dateString, token).length(), is(0));
+
+        assertThat(this.saveResponse.getStatus(), is(200));
+
+        JSONArray arr = CalendarTestUtils.findAllEventsByDate(dateString, dateString, token);
+
+        assertThat(arr.length(), is(eventCount - 1));
     }
 
     @Dann("^werden TestUser folgende Ergebnisse zurückgegeben:$")
@@ -81,9 +94,10 @@ public class CalendarEventsSteps {
         for (Map.Entry<String, String> eventEntry : data.entrySet()) {
             boolean found = false;
             for (int i = 0; i < arr.length(); i++) {
-                if (arr.getJSONObject(i).getString("title").equals(eventEntry.getKey())
-                        && arr.getJSONObject(i).getString("from").equals(eventEntry.getValue() + " 00:00")
-                        && arr.getJSONObject(i).getString("until").equals(eventEntry.getValue() + " 23:59")) {
+                JSONObject jsonObject = arr.getJSONObject(i);
+                if (jsonObject.getString("title").equals(eventEntry.getKey())
+                        && jsonObject.getString("start").equals(eventEntry.getValue() + " 00:00")
+                        && jsonObject.getString("end").equals(eventEntry.getValue() + " 23:59")) {
                     found = true;
                     break;
                 }
@@ -95,56 +109,72 @@ public class CalendarEventsSteps {
     @Dann("^steht das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalender von TestUser$")
     public void stehtDasEreignisAmInDemKalenderVonTestUser(String title, String dateString) throws Throwable {
         token = tryLogin(token);
-        assertThat(containsResponse.getStatus(), is(200));
+        assertThat(saveResponse.getStatus(), is(200));
 
-        JSONArray contains = CalendarTestUtils.findAllEventsByDate(dateString, dateString, token);
-        fail("implement assertion");
+        JSONArray events = CalendarTestUtils.findAllEventsByDate(dateString + " 00:00", dateString + " 23:59", token);
+        boolean contains1 = false;
+        for (int i = 0; i < events.length(); i++) {
+            JSONObject event = events.getJSONObject(i);
+            if (event.getString("title").equals(title) && event.getString("start").contains(dateString) && event.getString("end").contains(dateString)) {
+                contains1 = true;
+                break;
+            }
+        }
+        boolean contains = contains1;
+        assertTrue(String.format("Kalenderereignis:{%s, %s} konnte nicht gefnunden werden.", title, dateString), contains);
     }
+
     //endregion
     //endregion
 
     //region zeitgebunden
     //region gegenben sei
     @Gegebensei("^das Ereignis \"([^\"]*)\"  von \"([^\"]*)\"Uhr bis \"([^\"]*)\"Uhr in dem Kalendar von TestUser$")
-    public void dasEreignisVonUhrBisUhrInDemKalendarVonTestUser(String title, String fromString, String untilString) throws Throwable {
+    public void dasEreignisVonUhrBisUhrInDemKalendarVonTestUser(String title, String startString, String endString) throws Throwable {
         token = tryLogin(token);
-        CalendarTestUtils.createTimespanEvent(title, fromString, untilString, token);
+        Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, startString, endString, token);
+        if (event == null) {
+            CalendarTestUtils.createTimespanEvent(title, startString, endString, token);
+        }
     }
 
     //endregion
     //region wenn
     @Wenn("^TestUser ein Ereigniss mit dem Titel \"([^\"]*)\" von \"([^\"]*)\"Uhr bis \"([^\"]*)\"Uhr erstellt$")
-    public void testuserEinEreignissMitDemTitelVonUhrBisUhrErstellt(String title, String fromString, String untilString) throws Throwable {
+    public void testuserEinEreignissMitDemTitelVonUhrBisUhrErstellt(String title, String startString, String endString) throws Throwable {
         token = tryLogin(token);
-        CalendarTestUtils.createTimespanEvent(title, fromString, untilString, token);
+        this.saveResponse = CalendarTestUtils.createTimespanEvent(title, startString, endString, token);
     }
 
     @Wenn("^TestUser das Ereignis \"([^\"]*)\" von \"([^\"]*)\"Uhr bis \"([^\"]*)\"Uhr zu \"([^\"]*)\" zwischen \"([^\"]*)\"Uhr und \"([^\"]*)\"Uhr ändert$")
-    public void testuserDasEreignisVonUhrBisUhrZuAmZwischenUhrUndUhrÄndert(String title1, String fromString1, String untilString1, String title2, String fromString2, String untilString2) throws Throwable {
+    public void testuserDasEreignisVonUhrBisUhrZuAmZwischenUhrUndUhrÄndert(String title1, String startString1, String endString1, String title2, String startString2, String endString2) throws Throwable {
         token = tryLogin(token);
-        Event event = CalendarTestUtils.findOneEventByTitleAndDate(title1, fromString1, untilString1, token);
+        Event event = CalendarTestUtils.findOneEventByTitleAndDate(title1, startString1, endString1, token);
         if (event == null) {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         } else {
             event.setTitle(title2);
-            event.setFrom(fromString2);
-            event.setUntil(untilString2);
-            CalendarTestUtils.saveEvent(event,token);
+            event.setStartString(startString2);
+            event.setEndString(endString2);
+            this.saveResponse = CalendarTestUtils.saveEvent(event, token);
         }
     }
 
     //endregion
     //region dann
     @Dann("^steht das Ereignis \"([^\"]*)\" von \"([^\"]*)\"Uhr bis \"([^\"]*)\"Uhr in dem Kalender von TestUser$")
-    public void stehtDasEreignisVonUhrBisUhrInDemKalenderVonTestUser(String title, String fromString, String untilString) throws Throwable {
+    public void stehtDasEreignisVonUhrBisUhrInDemKalenderVonTestUser(String title, String startString, String endString) throws Throwable {
         token = tryLogin(token);
-        Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, fromString, untilString, token);
+
+        assertThat(this.saveResponse.getStatus(), is(200));
+
+        Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, startString, endString, token);
         if (event == null) {
             fail("Kalendarereignis konnte nicht gefunen werden.");
         } else {
             assertThat(event.getTitle(), is(title));
-            assertThat(event.getFrom(), is(Event.parse(fromString)));
-            assertThat(event.getUntil(), is(Event.parse(untilString)));
+            assertThat(event.getStart(), is(CalendarUtils.parse(startString)));
+            assertThat(event.getEnd(), is(CalendarUtils.parse(endString)));
         }
     }
     //endregion

@@ -15,57 +15,57 @@ Funktionalität: Registerieren
       | Arne    | Stulken  | arstulke     | arne@example.com | passwort |
     Wenn man sich mit folgenden Benutzerdaten registriert:
       | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      | Karl    | Abert    | arstulke     | karl@example.com | passwort |
+      | Enno    | Krämer   | arstulke     | enno@example.com | passwort |
     Dann wird das Registrieren verweigert
 
 
   Szenario: Registrieren mit belegter EMail-Adresse
     Gegeben sei der Benutzer mit folgenden Benutzerdaten:
       | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      | Arne    | Stulken  | arstulke     | arne@example.com | passwort |
+      | Hans    | Müller   | hamuelle     | hans@example.com | passwort |
     Wenn man sich mit folgenden Benutzerdaten registriert:
       | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      | Arne    | Stulken  | kaabert      | arne@example.com | passwort |
+      | Arne    | Stulken  | arstulke     | hans@example.com | passwort |
     Dann wird das Registrieren verweigert
 
 
   Szenario: Registrieren mit zu kurzem Benutzernamen
     Wenn man sich mit folgenden Benutzerdaten registriert:
       | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      | Karl    | Abert    | to           | karl@example.com | passwort |
+      | Egon    | Schmitt  | es           | egon@example.com | passwort |
     Dann wird das Registrieren verweigert
 
 
-  Szenario: Registrieren ohen Vornamen
+  Szenario: Registrieren ohne Vornamen
     Wenn man sich mit folgenden Benutzerdaten registriert:
-      | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      |         | Abert    | kaabert      | karl@example.com | passwort |
+      | Vorname | Nachname | Benutzername | E-Mail Adresse     | Passwort |
+      |         | Becker   | becker       | becker@example.com | passwort |
     Dann wird das Registrieren verweigert
 
 
   Szenario: Registrieren ohne Nachnamen
     Wenn man sich mit folgenden Benutzerdaten registriert:
-      | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      | Karl    |          | kaabert      | karl@example.com | passwort |
+      | Vorname | Nachname | Benutzername | E-Mail Adresse    | Passwort |
+      | Klaus   |          | klbaumann    | klaus@example.com | passwort |
     Dann wird das Registrieren verweigert
 
 
   Szenario: Registrieren ohne EMail-Adresse
     Wenn man sich mit folgenden Benutzerdaten registriert:
       | Vorname | Nachname | Benutzername | E-Mail Adresse | Passwort |
-      | Karl    | Abert    | kaabert      |                | passwort |
+      | Dieter  | Schuster | dischust     |                | passwort |
     Dann wird das Registrieren verweigert
 
 
   Szenario: Registrieren mit zu langem Benutzername
     Wenn man sich mit folgenden Benutzerdaten registriert:
-      | Vorname | Nachname | Benutzername                          | E-Mail Adresse   | Passwort |
-      | Karl    | Abert    | DieserBenutzernameHatMehrAls20Stellen | karl@example.com | passwort |
+      | Vorname | Nachname | Benutzername                                                  | E-Mail Adresse      | Passwort |
+      | Michael | Wolf     | DieserBenutzernameHatMehrAls20Stellen__iuehseiuhfsuwdwddweihfsjedrw | michael@example.com | passwort |
     Dann wird das Registrieren verweigert
 
 
   Szenario: Registrieren mit zu kurzem Passwort
     Wenn man sich mit folgenden Benutzerdaten registriert:
       | Vorname | Nachname | Benutzername | E-Mail Adresse   | Passwort |
-      | Karl    | Abert    | kaabert      | karl@example.com | zukurz   |
+      | Ingo    | Brandt   | inbrandt     | ingo@example.com | zukurz   |
     Dann wird das Registrieren verweigert

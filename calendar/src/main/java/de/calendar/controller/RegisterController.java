@@ -22,16 +22,14 @@ public class RegisterController {
     @RequestMapping("/register")
     public ResponseEntity<String> register(@RequestHeader("data") String dataString) {
         JSONObject data = new JSONObject(dataString);
-
-        String valid = validate(data);
-        if (valid == null) {
+        if (valid(data)) {
             User user = new User(data);
             User savedInstance1 = userRepository.findOneByUsername(user.getUsername());
             User savedInstance2 = userRepository.findOneByEmail(user.getEmail());
 
             if (savedInstance1 == null && savedInstance2 == null) {
                 userRepository.save(user);
-                return new ResponseEntity<>(new JSONObject().toString(), HttpStatus.CREATED);
+                return new ResponseEntity<>("", HttpStatus.CREATED);
             } else {
                 String reason = (savedInstance1 != null ? "Der \"username" : "Die \"E-Mail") + "\" ist bereits vergeben.";
                 return new ResponseEntity<>(
@@ -43,34 +41,34 @@ public class RegisterController {
                 );
             }
         } else {
-            return new ResponseEntity<>(
-                    new JSONObject()
-                            .put("status", HttpStatus.BAD_REQUEST.value())
-                            .put("reason", "Der \"" + valid + "\" fehlt im JSONObject des \"Data\" Headers.")
-                            .toString(),
-                    HttpStatus.BAD_REQUEST
-            );
+            return new ResponseEntity<>("You have to set the http header \"Data\" as json.\n" +
+                    "The json object should contain the following keys:\n" +
+                    " - firstname\n" +
+                    " - lastname\n" +
+                    " - username\n" +
+                    " - email\n" +
+                    " - password", HttpStatus.BAD_REQUEST);
         }
     }
 
-    public static String validate(JSONObject data) {
-        if (!data.has("firstname")) return "firstname";
-        if (!data.has("lastname")) return "lastname";
-        if (!data.has("username")) return "username";
-        if (!data.has("email")) return "email";
-        if (!data.has("password")) return "password";
+    public static boolean valid(JSONObject data) {
+        if (!data.has("firstname")) return false;
+        if (!data.has("lastname")) return false;
+        if (!data.has("username")) return false;
+        if (!data.has("email")) return false;
+        if (!data.has("password")) return false;
 
-        if (data.getString("firstname").length() < 3) return "firstname";
-        if (data.getString("lastname").length() < 3) return "lastname";
-        if (data.getString("username").length() < 3) return "username";
-        if (!data.getString("email").contains("@")) return "email";
-        if (!data.getString("email").contains(".")) return "email";
-        if (data.getString("password").length() < 8) return "password";
+        if (data.getString("firstname").length() < 3) return false;
+        if (data.getString("lastname").length() < 3) return false;
+        if (data.getString("username").length() < 3) return false;
+        if (!data.getString("email").contains("@")) return false;
+        if (!data.getString("email").contains(".")) return false;
+        if (data.getString("password").length() < 8) return false;
 
-        if (data.getString("firstname").length() > 60) return "firstname";
-        if (data.getString("lastname").length() > 60) return "lastname";
-        if (data.getString("username").length() > 60) return "username";
+        if (data.getString("firstname").length() > 60) return false;
+        if (data.getString("lastname").length() > 60) return false;
+        if (data.getString("username").length() > 60) return false;
 
-        return null;
+        return true;
     }
 }
