@@ -5,7 +5,9 @@ import org.json.JSONObject;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created User in de.calendar.model
@@ -37,8 +39,8 @@ public class User {
     @Embedded
     private Token token;
 
-    @OneToMany(targetEntity = Event.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Event> events;
+    @ManyToMany(targetEntity = Event.class, cascade = CascadeType.ALL)
+    private Set<Event> events;
 
     public User() {
     }
@@ -50,7 +52,7 @@ public class User {
         this.email = email;
         this.password = password;
 
-        this.events = new ArrayList<>();
+        this.events = new HashSet<>();
     }
 
     public User(JSONObject data) {
@@ -91,7 +93,7 @@ public class User {
         this.token = token;
     }
 
-    public List<Event> getEvents() {
+    public Set<Event> getEvents() {
         return events;
     }
 }

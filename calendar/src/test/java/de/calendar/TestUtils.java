@@ -1,5 +1,6 @@
 package de.calendar;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -78,12 +79,36 @@ public class TestUtils {
         }
     }
 
-    public static String tryLogin(String token) {
+    public static String tryLogin(String token, String username, String password) {
         if (token == null) {
-            JSONObject jsonObject = login(testUsername, testUserPassword).getJSONObject();
+            JSONObject jsonObject = login(username, password).getJSONObject();
             token = jsonObject.getString("token");
         }
         return token;
+    }
+
+    public static String tryLogin(String token) {
+        return tryLogin(token,testUsername,testUserPassword);
+    }
+
+    public static String forceLogin(String token, String username, String password){
+        try{
+            return tryLogin(token, username, password);
+        }catch (JSONException e){
+            tryRegister("Teeeeest","Usssser",username,username + "@.com",password);
+            return tryLogin(token, username, password);
+        }
+    }
+
+    private static Response tryRegister(String firstname, String lastname, String username, String email, String password) {
+        JSONObject json = new JSONObject()
+                .put("firstname", firstname)
+                .put("lastname", lastname)
+                .put("username",username)
+                .put("email",email)
+                .put("password", password);
+
+        return TestUtils.post("/register", json);
     }
 
     public static Response login(String username, String password) {
@@ -91,6 +116,6 @@ public class TestUtils {
                 .put("username", username)
                 .put("password", password);
 
-        return TestUtils.post("/login", data);
+        return TestUtils.post("/lo", data);
     }
 }

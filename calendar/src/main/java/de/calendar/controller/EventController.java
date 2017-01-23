@@ -1,9 +1,12 @@
 package de.calendar.controller;
 
 import de.calendar.model.Event;
+import de.calendar.model.InvitationToken;
 import de.calendar.model.User;
+import de.calendar.repositories.EventRepository;
 import de.calendar.repositories.UserRepository;
 import de.calendar.utils.CalendarUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,14 @@ public class EventController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EventRepository eventRepository;
+    private java.util.function.Function<Event, JSONObject> mapper = event -> new JSONObject()
+            .put("title", event.getTitle())
+            .put("start", event.getStartString())
+            .put("end", event.getEndString())
+            .put("id", event.getID());
+
     @RequestMapping("/event/create")
     public ResponseEntity<String> createEvent(@RequestParam(name = "token") String token, @RequestHeader(name = "Data") String dataString) {
         return authorize(token, dataString, (user, data) -> {
@@ -31,10 +42,10 @@ public class EventController {
                 LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
                 LocalDateTime endTMP = CalendarUtils.parse(data.has("end") ? data.getString("end") : null);
                 LocalDateTime start, end;
-                if(startTMP == null && endTMP != null) {
+                if (startTMP == null && endTMP != null) {
                     start = endTMP.minusHours(1L);
                     end = endTMP;
-                } else if(startTMP != null && endTMP == null) {
+                } else if (startTMP != null && endTMP == null) {
                     start = startTMP;
                     end = startTMP.plusHours(1L);
                 } else {
@@ -43,10 +54,13 @@ public class EventController {
                 }
 
                 Event event = new Event(data.getString("title"), start, end);
+                event.setOwner(user);
+
                 user.getEvents().add(event);
                 userRepository.save(user);
+                eventRepository.save(event);
 
-                return new ResponseEntity<>("", HttpStatus.OK);
+                return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("You have to set the http header \"Data\" as json.\n" +
                         "The json object should contain the following keys:\n" +
@@ -79,11 +93,7 @@ public class EventController {
                 List<JSONObject> events = user.getEvents()
                         .stream()
                         .filter(event -> CalendarUtils.isEventBetween(event, from, until))
-                        .map(event -> new JSONObject()
-                                .put("title", event.getTitle())
-                                .put("start", event.getStartString())
-                                .put("end", event.getEndString())
-                                .put("id", event.getID()))
+                        .map(mapper)
                         .collect(Collectors.toList());
                 return new ResponseEntity<>(new JSONArray(events).toString(), HttpStatus.OK);
             } else {
@@ -96,21 +106,17 @@ public class EventController {
     public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id, @RequestHeader(name = "Data") String dataString) {
         return authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
-                List<Event> events = user.getEvents().stream().filter(event -> event.getID().equals(Long.valueOf(id))).collect(Collectors.toList());
-                if (events.size() > 1) {
-                    throw new AssertionError("Datenbankfehler mehrere Termine mit der ID " + id);
-                } else if (events.size() == 0) {
-                    return new ResponseEntity<>("Das gesuchte Element konnte nicht gefunen werden.", HttpStatus.NOT_FOUND);
+                Event event = eventRepository.findOne(Long.valueOf(id));
+                if (!event.getOwner().equals(user)) {
+                    return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
                 } else {
-                    Event event = events.get(0);
-
                     LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
                     LocalDateTime endTMP = CalendarUtils.parse(data.has("end") ? data.getString("end") : null);
                     LocalDateTime start, end;
-                    if(startTMP == null && endTMP != null) {
+                    if (startTMP == null && endTMP != null) {
                         start = endTMP.minusHours(1L);
                         end = endTMP;
-                    } else if(startTMP != null && endTMP == null) {
+                    } else if (startTMP != null && endTMP == null) {
                         start = startTMP;
                         end = startTMP.plusHours(1L);
                     } else {
@@ -122,7 +128,7 @@ public class EventController {
                     event.setStart(start);
                     event.setEnd(end);
 
-                    userRepository.save(user);
+                    eventRepository.save(event);
 
                     return new ResponseEntity<>("", HttpStatus.OK);
                 }
@@ -139,19 +145,49 @@ public class EventController {
     @RequestMapping("event/{id}/delete")
     public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
         return authorize(token, null, (user, data) -> {
-            List<Event> events = user.getEvents().stream().filter(event -> event.getID().equals(Long.valueOf(id))).collect(Collectors.toList());
-            if (events.size() > 1) {
-                throw new AssertionError("Datenbankfehler mehrere Termine mit der ID " + id);
-            } else if (events.size() == 0) {
-                return new ResponseEntity<>("Das gesuchte Element konnte nicht gefunen werden.", HttpStatus.NOT_FOUND);
-            } else {
-                Event event = events.get(0);
-                user.getEvents().remove(event);
-
-                userRepository.save(user);
-
-                return new ResponseEntity<>("", HttpStatus.OK);
+            Event event = eventRepository.findOne(Long.valueOf(id));
+            if(!event.getOwner().equals(user)) {
+                return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
+            user.getEvents().remove(event);
+
+            userRepository.save(user);
+
+            return new ResponseEntity<>("", HttpStatus.OK);
+        });
+    }
+
+    @RequestMapping("event/{id}/invite")
+    public ResponseEntity<String> inviteEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
+        return authorize(token, null, (user, data) -> {
+            if (id == null || !StringUtils.isNumeric(id)) {
+                return new ResponseEntity<>("\"" + id + "\" is not a valid ID.", HttpStatus.BAD_REQUEST);
+            }
+
+            Event event = eventRepository.findOne(Long.valueOf(id));
+            if (event.getOwner().equals(user)) {
+                String link = event.createInvitationLink();
+                eventRepository.save(event);
+
+                return new ResponseEntity<>(new JSONObject().put("url", link).toString(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
+            }
+        });
+    }
+
+    @RequestMapping("event/{id}/join")
+    public ResponseEntity<String> joinEvent(@RequestParam(name = "token") String token, @RequestParam(name = "invitationToken") String invitationToken, @PathVariable("id") String id) {
+        return authorize(token, null, (user, data) -> {
+            Event event = eventRepository.findOne(Long.valueOf(id));
+            try {
+                event.join(user, new InvitationToken(invitationToken));
+                eventRepository.save(event);
+                userRepository.save(user);
+            } catch (IllegalArgumentException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+            }
+            return new ResponseEntity<>("", HttpStatus.OK);
         });
     }
 
@@ -159,14 +195,15 @@ public class EventController {
         if (!data.has("title")) return false;
         if (!(data.has("start") || data.has("end"))) return false;
 
-        if (CalendarUtils.parse(data.has("start") ? data.getString("start"): null) == null && CalendarUtils.parse(data.has("end") ? data.getString("end"): null) == null) return false;
+        if (CalendarUtils.parse(data.has("start") ? data.getString("start") : null) == null && CalendarUtils.parse(data.has("end") ? data.getString("end") : null) == null)
+            return false;
 
         return true;
     }
 
     private ResponseEntity<String> authorize(String token, String dataString, Function function) {
         User user = userRepository.findOneByTokenValue(token);
-        if (user == null) {
+        if (user == null || user.getToken().isExpired()) {
             return new ResponseEntity<>("Invalid or expired token.", HttpStatus.UNAUTHORIZED);
         } else {
             return function.doSomething(user, dataString == null ? null : new JSONObject(dataString));

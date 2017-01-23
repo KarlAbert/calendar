@@ -19,15 +19,15 @@ public class TokenGenerator {
 
 
     public Token generate() {
-        String value = generateRandom();
+        String value = generateRandom(32);
         while(userRepository.findOneByTokenValue(value) != null) {
-            value = generateRandom();
+            value = generateRandom(32);
         }
 
         return new Token(value, LocalDateTime.now().plusHours(24L));
     }
 
-    private String generateRandom() {
-        return RandomStringUtils.random(32, true, true);
+    public static String generateRandom(int length) {
+        return RandomStringUtils.random(length, true, true);
     }
 }

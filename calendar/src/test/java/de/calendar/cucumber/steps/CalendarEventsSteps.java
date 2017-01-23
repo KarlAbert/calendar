@@ -45,7 +45,7 @@ public class CalendarEventsSteps {
         token = tryLogin(token);
         Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, dateString + " 00:00", dateString + " 23:59", token);
 
-        this.eventCount = CalendarTestUtils.findAllEventsByDate(dateString, dateString, token).length();
+        this.eventCount = CalendarTestUtils.findAllEventsByDate(dateString + " 00:00", dateString + " 23:59", token).length();
         this.saveResponse = CalendarTestUtils.deleteEvent(event, token);
     }
 
@@ -84,7 +84,7 @@ public class CalendarEventsSteps {
 
         assertThat(this.saveResponse.getStatus(), is(200));
 
-        JSONArray arr = CalendarTestUtils.findAllEventsByDate(dateString, dateString, token);
+        JSONArray arr = CalendarTestUtils.findAllEventsByDate(dateString + " 00:00", dateString + " 23:59", token);
 
         assertThat(arr.length(), is(eventCount - 1));
     }

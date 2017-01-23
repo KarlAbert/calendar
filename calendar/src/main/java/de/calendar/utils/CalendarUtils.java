@@ -36,11 +36,7 @@ public class CalendarUtils {
         try {
             return LocalDateTime.parse(string, Event.DATETIME_FORMAT);
         } catch (Exception e) {
-            try {
-                return LocalDateTime.parse(string + " 00:00", Event.DATETIME_FORMAT);
-            } catch (Exception e2) {
-                return null;
-            }
+            return null;
         }
     }
 }

@@ -22,7 +22,7 @@ public class LoginController {
     @Autowired
     private TokenGenerator tokenGenerator;
 
-    @RequestMapping("/login")
+    @RequestMapping("/lo")
     public ResponseEntity<String> login(@RequestHeader(name = "Data") String dataString) {
         JSONObject data = new JSONObject(dataString);
         if (valid(data)) {

@@ -67,4 +67,5 @@ public class CalendarTestUtils {
     public static Response deleteEvent(Event event, String token) {
         return TestUtils.get("/event/" + event.getID() + "/delete", token);
     }
+
 }

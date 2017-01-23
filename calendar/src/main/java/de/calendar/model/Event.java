@@ -1,12 +1,17 @@
 package de.calendar.model;
 
 import de.calendar.utils.CalendarUtils;
+import de.calendar.utils.TokenGenerator;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created Event in de.calendar
@@ -35,6 +40,15 @@ public class Event {
     @Size(min = 10, max = 16)
     @Column(name = "end_event")
     private String end;
+
+    @OneToMany(targetEntity = InvitationToken.class, cascade = CascadeType.ALL)
+    private Set<InvitationToken> invitationTokens = new HashSet<>();
+
+    @ManyToOne(targetEntity = User.class, cascade = CascadeType.ALL)
+    private User owner;
+
+    @ManyToMany(targetEntity = User.class, cascade = CascadeType.ALL)
+    private Set<User> members;
 
     public Event() {
     }
@@ -95,5 +109,39 @@ public class Event {
 
     public void setID(long id) {
         this.id = id;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
+
+    public String createInvitationLink() {
+        String token = TokenGenerator.generateRandom(64);
+        while (invitationTokens.contains(new InvitationToken(token))) {
+            token = TokenGenerator.generateRandom(64);
+        }
+
+        this.invitationTokens.add(new InvitationToken(token));
+
+        return String.format("/event/%d/join?invitationToken=%s", id, token);
+    }
+
+    public void join(User user, InvitationToken invitationToken) {
+        if(invitationTokens.contains(invitationToken)) {
+            members.add(user);
+            user.getEvents().add(this);
+
+            this.invitationTokens.remove(invitationToken);
+        } else {
+            throw new IllegalArgumentException("Invalid or expired invitation token.");
+        }
+    }
+
+    private Set<String> getInvitationTokens() {
+        return this.invitationTokens.stream().map(InvitationToken::getValue).collect(Collectors.toSet());
     }
 }
