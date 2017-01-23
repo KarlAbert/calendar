@@ -31,9 +31,9 @@ public class LoginSteps {
 
     @Dann("^wird der Zugriff gewährt$")
     public void wirdDerZugriffGewährt() throws Throwable {
-        JSONObject responseData = response.getJSONObject();
+        JSONObject responsedata = response.getJSONObject();
 
-        assertTrue("Wrong Response Format", responseData.has("token") && responseData.has("expiring"));
+        assertTrue("Wrong Response Format", responsedata.has("token") && responsedata.has("expiring"));
         assertThat(response.getStatus(), is(200));
     }
 }

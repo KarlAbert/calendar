@@ -16,7 +16,7 @@ public class RegisterControllerTest {
      * Spezifiziert das Verhalten von {@link RegisterController#valid(JSONObject)}.
      */
     @Test
-    public void validatesDataPost() {
+    public void validatesdataPost() {
         assertThat(valid(new JSONObject()
                 .put("firstname", "Arne")
                 .put("lastname", "Stulken")

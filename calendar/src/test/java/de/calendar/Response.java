@@ -22,7 +22,7 @@ public class Response {
         return status;
     }
 
-    public String getRawData() {
+    public String getRawdata() {
         return data;
     }
 

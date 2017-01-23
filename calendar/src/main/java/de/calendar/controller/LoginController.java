@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,8 +23,8 @@ public class LoginController {
     @Autowired
     private TokenGenerator tokenGenerator;
 
-    @RequestMapping("/lo")
-    public ResponseEntity<String> login(@RequestHeader(name = "Data") String dataString) {
+    @RequestMapping("/login")
+    public ResponseEntity<String> login(@RequestBody String dataString) {
         JSONObject data = new JSONObject(dataString);
         if (valid(data)) {
             User user = userRepository.findOneByUsernameAndPassword(data.getString("username"), data.getString("password"));
@@ -51,7 +52,7 @@ public class LoginController {
 
             }
         } else {
-            return new ResponseEntity<>("You have to set the http header \"Data\" as json.\n" +
+            return new ResponseEntity<>("You have to set the http header \"data\" as json.\n" +
                     "The json object should contain the following keys:\n" +
                     " - username\n" +
                     " - password", HttpStatus.BAD_REQUEST);

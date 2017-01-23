@@ -17,7 +17,7 @@ public class EventControllerTest {
      * Spezifiziert das Verhalten von {@link EventController#valid(JSONObject)}.
      */
     @Test
-    public void validatesDataPost() {
+    public void validatesdataPost() {
         assertThat(valid(new JSONObject()
                 .put("title", "Test1")
                 .put("start", "21.01.2017 00:00")

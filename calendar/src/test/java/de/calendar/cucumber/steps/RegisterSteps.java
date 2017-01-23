@@ -61,7 +61,7 @@ public class RegisterSteps {
     @Dann("^ist das Registrieren erfolgreich$")
     public void istDasRegistrierenErfolgreich() throws Throwable {
         assertThat(response.getStatus(), is(201));
-        assertThat(response.getRawData(), is(""));
+        assertThat(response.getRawdata(), is(""));
     }
     //endregion
 }

@@ -36,7 +36,7 @@ public class EventController {
             .put("id", event.getID());
 
     @RequestMapping("/event/create")
-    public ResponseEntity<String> createEvent(@RequestParam(name = "token") String token, @RequestHeader(name = "Data") String dataString) {
+    public ResponseEntity<String> createEvent(@RequestParam(name = "token") String token, @RequestBody String dataString) {
         return authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
@@ -62,7 +62,7 @@ public class EventController {
 
                 return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("You have to set the http header \"Data\" as json.\n" +
+                return new ResponseEntity<>("You have to set the http header \"data\" as json.\n" +
                         "The json object should contain the following keys:\n" +
                         " - title\n" +
                         " - from (dd.mm.yyyy HH:MM)\n" +
@@ -103,7 +103,7 @@ public class EventController {
     }
 
     @RequestMapping("/event/{id}/edit")
-    public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id, @RequestHeader(name = "Data") String dataString) {
+    public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id, @RequestBody String dataString) {
         return authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
@@ -133,7 +133,7 @@ public class EventController {
                     return new ResponseEntity<>("", HttpStatus.OK);
                 }
             } else {
-                return new ResponseEntity<>("You have to set the http header \"Data\" as json.\n" +
+                return new ResponseEntity<>("You have to set the http header \"data\" as json.\n" +
                         "The json object should contain the following keys:\n" +
                         " - title\n" +
                         " - start\n" +

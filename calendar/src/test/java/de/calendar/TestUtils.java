@@ -3,10 +3,7 @@ package de.calendar;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -47,7 +44,7 @@ public class TestUtils {
 
     private static Response readResponse(String stringURL, JSONObject data, String httpMethod) {
         try {
-            //post Data
+            //post data
             if (!DOMAIN.endsWith("/") && !stringURL.startsWith("/")) {
                 stringURL = "/" + stringURL;
             }
@@ -55,7 +52,12 @@ public class TestUtils {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(httpMethod);
             if (data != null) {
-                connection.setRequestProperty("Data", data.toString());
+                connection.setRequestProperty("Content-type", "application/json");
+                connection.setDoOutput(true);
+                try (DataOutputStream wr = new DataOutputStream(connection.getOutputStream())) {
+                    wr.write(data.toString().getBytes());
+                    wr.close();
+                }
             }
 
             //Get Response
@@ -88,14 +90,14 @@ public class TestUtils {
     }
 
     public static String tryLogin(String token) {
-        return tryLogin(token,testUsername,testUserPassword);
+        return tryLogin(token, testUsername, testUserPassword);
     }
 
-    public static String forceLogin(String token, String username, String password){
-        try{
+    public static String forceLogin(String token, String username, String password) {
+        try {
             return tryLogin(token, username, password);
-        }catch (JSONException e){
-            tryRegister("Teeeeest","Usssser",username,username + "@.com",password);
+        } catch (JSONException e) {
+            tryRegister("Teeeeest", "Usssser", username, username + "@example.com", password);
             return tryLogin(token, username, password);
         }
     }
@@ -104,8 +106,8 @@ public class TestUtils {
         JSONObject json = new JSONObject()
                 .put("firstname", firstname)
                 .put("lastname", lastname)
-                .put("username",username)
-                .put("email",email)
+                .put("username", username)
+                .put("email", email)
                 .put("password", password);
 
         return TestUtils.post("/register", json);
@@ -116,6 +118,6 @@ public class TestUtils {
                 .put("username", username)
                 .put("password", password);
 
-        return TestUtils.post("/lo", data);
+        return TestUtils.post("/login", data);
     }
 }

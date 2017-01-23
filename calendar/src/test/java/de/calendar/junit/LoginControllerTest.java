@@ -16,7 +16,7 @@ public class LoginControllerTest {
      * Spezifiziert das Verhalten von {@link LoginController#valid(JSONObject)}.
      */
     @Test
-    public void validatesDataPost() {
+    public void validatesdataPost() {
         assertThat(valid(new JSONObject()
                 .put("username", "arstulke")
                 .put("password", "Test1234")

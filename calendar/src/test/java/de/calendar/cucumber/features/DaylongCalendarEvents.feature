@@ -3,8 +3,8 @@
 Funktionalität: ganztägige Kalenderereignisse
 
   Szenario: ganztägiges Ereignis erstellen
-    Wenn TestUser ein ganztägiges Ereigniss am "21.01.2017" mit dem Titel "Karls Geburtstag" erstellt
-    Dann steht das ganztägige Ereignis "Karls Geburtstag" am "21.01.2017" in dem Kalender von TestUser
+    Wenn TestUser ein ganztägiges Ereigniss am "31.02.2017" mit dem Titel "Karls Geburtstag" erstellt
+    Dann steht das ganztägige Ereignis "Karls Geburtstag" am "31.02.2017" in dem Kalender von TestUser
 
 
   Szenario: ganztägiges Ereignis bearbeiten
