@@ -32,7 +32,7 @@ public class LoginController {
                 return new ResponseEntity<>(
                         new JSONObject()
                                 .put("status", HttpStatus.FORBIDDEN.value())
-                                .put("reason", "Unknown Credentials")
+                                .put("reason", "Unknown credentials")
                                 .toString(),
                         HttpStatus.FORBIDDEN
                 );

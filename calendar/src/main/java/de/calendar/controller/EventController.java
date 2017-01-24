@@ -54,15 +54,13 @@ public class EventController {
                 }
 
                 Event event = new Event(data.getString("title"), start, end);
-                event.setOwner(user);
-
-                user.getEvents().add(event);
-                userRepository.save(user);
+                user.getOwnerships().add(event);
                 eventRepository.save(event);
+                userRepository.save(user);
 
                 return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("You have to set the http header \"data\" as json.\n" +
+                return new ResponseEntity<>("You have to set the http body as json.\n" +
                         "The json object should contain the following keys:\n" +
                         " - title\n" +
                         " - from (dd.mm.yyyy HH:MM)\n" +
@@ -90,11 +88,17 @@ public class EventController {
                     until = untilTMP;
                 }
 
-                List<JSONObject> events = user.getEvents()
+                List<JSONObject> events = user.getMemberships()
                         .stream()
                         .filter(event -> CalendarUtils.isEventBetween(event, from, until))
                         .map(mapper)
                         .collect(Collectors.toList());
+
+                events.addAll(user.getOwnerships()
+                        .stream()
+                        .filter(event -> CalendarUtils.isEventBetween(event, from, until))
+                        .map(mapper)
+                        .collect(Collectors.toList()));
                 return new ResponseEntity<>(new JSONArray(events).toString(), HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("You have to set the \"from\" or the \"until\" query param.\nIf you only set one the other would be 1 hour before/after the given param.", HttpStatus.BAD_REQUEST);
@@ -107,7 +111,7 @@ public class EventController {
         return authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
-                if (!event.getOwner().equals(user)) {
+                if (!user.getOwnerships().contains(event)) {
                     return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
                 } else {
                     LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
@@ -133,7 +137,7 @@ public class EventController {
                     return new ResponseEntity<>("", HttpStatus.OK);
                 }
             } else {
-                return new ResponseEntity<>("You have to set the http header \"data\" as json.\n" +
+                return new ResponseEntity<>("You have to set the http body as json.\n" +
                         "The json object should contain the following keys:\n" +
                         " - title\n" +
                         " - start\n" +
@@ -146,12 +150,26 @@ public class EventController {
     public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
         return authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
-            if(!event.getOwner().equals(user)) {
+            if (!user.getOwnerships().contains(event)) {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
-            user.getEvents().remove(event);
+            userRepository.findAll()
+                    .stream()
+                    .filter(user12 -> user12.getMemberships().contains(event) || user12.getOwnerships().contains(event))
+                    .forEach(user1 -> {
+                        user1.getMemberships()
+                                .stream()
+                                .filter(event1 -> event1.getID().equals(event.getID()))
+                                .forEach(event1 -> user1.getMemberships().remove(event1));
 
-            userRepository.save(user);
+                        user1.getOwnerships()
+                                .stream()
+                                .filter(event1 -> event1.getID().equals(event.getID()))
+                                .forEach(event1 -> user1.getOwnerships().remove(event1));
+                        userRepository.save(user1);
+                    });
+
+            eventRepository.delete(event);
 
             return new ResponseEntity<>("", HttpStatus.OK);
         });
@@ -165,7 +183,7 @@ public class EventController {
             }
 
             Event event = eventRepository.findOne(Long.valueOf(id));
-            if (event.getOwner().equals(user)) {
+            if (user.getOwnerships().contains(event)) {
                 String link = event.createInvitationLink();
                 eventRepository.save(event);
 
@@ -181,13 +199,25 @@ public class EventController {
         return authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
             try {
-                event.join(user, new InvitationToken(invitationToken));
+                user.getMemberships().add(event);
+                event.join(new InvitationToken(invitationToken));
                 eventRepository.save(event);
                 userRepository.save(user);
             } catch (IllegalArgumentException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
             }
             return new ResponseEntity<>("", HttpStatus.OK);
+        });
+    }
+
+    @RequestMapping("event/{id}/get")
+    public ResponseEntity<String> getEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
+        return authorize(token, null, (user, data) -> {
+            Event event = eventRepository.findOne(Long.valueOf(id));
+            if (!(user.getOwnerships().contains(event) || user.getMemberships().contains(event))) {
+                return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
+            }
+            return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
         });
     }
 

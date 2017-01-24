@@ -3,8 +3,8 @@
 Funktionalität: ganztägige Kalenderereignisse
 
   Szenario: ganztägiges Ereignis erstellen
-    Wenn TestUser ein ganztägiges Ereigniss am "31.02.2017" mit dem Titel "Karls Geburtstag" erstellt
-    Dann steht das ganztägige Ereignis "Karls Geburtstag" am "31.02.2017" in dem Kalender von TestUser
+    Wenn TestUser ein ganztägiges Ereigniss am "21.01.2017" mit dem Titel "Karls Geburtstag" erstellt
+    Dann steht das ganztägige Ereignis "Karls Geburtstag" am "21.01.2017" in dem Kalender von TestUser
 
 
   Szenario: ganztägiges Ereignis bearbeiten
@@ -27,3 +27,9 @@ Funktionalität: ganztägige Kalenderereignisse
     Dann werden TestUser folgende Ergebnisse zurückgegeben:
       | Karls Geburtstag | 21.01.2017 |
       | Arnes Geburtstag | 08.05.2017 |
+
+  Szenario: Einzelnes Event abrufen
+    Gegeben sei das ganztägige Ereignis "Dein Geburtstag" am "22.01.2017" in dem Kalendar von TestUser
+    Wenn TestUser das ganztägige Ereignis anhand der ID von abruft
+    Dann werden TestUser folgende Ergebnisse zurückgegeben:
+      | Dein Geburtstag | 22.01.2017 |

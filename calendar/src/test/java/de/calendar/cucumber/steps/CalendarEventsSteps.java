@@ -1,5 +1,6 @@
 package de.calendar.cucumber.steps;
 
+import cucumber.api.PendingException;
 import cucumber.api.java.de.Dann;
 import cucumber.api.java.de.Gegebensei;
 import cucumber.api.java.de.Wenn;
@@ -26,6 +27,7 @@ public class CalendarEventsSteps {
     private Response saveResponse;
     private JSONArray arr;
     private int eventCount;
+    private Long lastID;
 
     //region ganztägig
     //region gegeben sei
@@ -34,7 +36,10 @@ public class CalendarEventsSteps {
         token = tryLogin(token);
         Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, dateString + " 00:00", dateString + " 23:59", token);
         if (event == null) {
-            CalendarTestUtils.createDaylongEvent(title, dateString, token);
+            Response response = CalendarTestUtils.createDaylongEvent(title, dateString, token);
+            lastID = response.getJSONObject().getLong("id");
+        } else{
+            lastID = event.getID();
         }
     }
     //endregion
@@ -176,6 +181,13 @@ public class CalendarEventsSteps {
             assertThat(event.getStart(), is(CalendarUtils.parse(startString)));
             assertThat(event.getEnd(), is(CalendarUtils.parse(endString)));
         }
+    }
+
+    @Wenn("^TestUser das ganztägige Ereignis anhand der ID von abruft$")
+    public void testuserDasGanztägigeEreignisAnhandDerIDVonAbruft() throws Throwable {
+        token = tryLogin(null);
+        arr = new JSONArray();
+        arr.put(0, CalendarTestUtils.findOneEventByID(lastID,token).getJSONObject());
     }
     //endregion
     //endregion

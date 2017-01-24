@@ -68,4 +68,8 @@ public class CalendarTestUtils {
         return TestUtils.get("/event/" + event.getID() + "/delete", token);
     }
 
+    public static Response findOneEventByID(Long id, String token) {
+        String url = String.format("/event/%d/get", id);
+        return TestUtils.get(url, token);
+    }
 }

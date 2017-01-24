@@ -4,9 +4,7 @@ import org.json.JSONObject;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,8 +37,11 @@ public class User {
     @Embedded
     private Token token;
 
-    @ManyToMany(targetEntity = Event.class, cascade = CascadeType.ALL)
-    private Set<Event> events;
+    @ManyToMany(targetEntity = Event.class)
+    private Set<Event> memberships;
+
+    @ManyToMany(targetEntity = Event.class, cascade = CascadeType.REMOVE)
+    private Set<Event> ownerships;
 
     public User() {
     }
@@ -52,7 +53,8 @@ public class User {
         this.email = email;
         this.password = password;
 
-        this.events = new HashSet<>();
+        this.ownerships = new HashSet<>();
+        this.memberships = new HashSet<>();
     }
 
     public User(JSONObject data) {
@@ -93,7 +95,11 @@ public class User {
         this.token = token;
     }
 
-    public Set<Event> getEvents() {
-        return events;
+    public Set<Event> getMemberships() {
+        return memberships;
+    }
+
+    public Set<Event> getOwnerships() {
+        return ownerships;
     }
 }

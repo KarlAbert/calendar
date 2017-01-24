@@ -97,7 +97,7 @@ public class TestUtils {
         try {
             return tryLogin(token, username, password);
         } catch (JSONException e) {
-            tryRegister("Teeeeest", "Usssser", username, username + "@example.com", password);
+            tryRegister("Teeeeest", "Usssser", username, username + "@test.com", password);
             return tryLogin(token, username, password);
         }
     }

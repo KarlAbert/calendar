@@ -10,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -43,12 +42,6 @@ public class Event {
 
     @OneToMany(targetEntity = InvitationToken.class, cascade = CascadeType.ALL)
     private Set<InvitationToken> invitationTokens = new HashSet<>();
-
-    @ManyToOne(targetEntity = User.class, cascade = CascadeType.ALL)
-    private User owner;
-
-    @ManyToMany(targetEntity = User.class, cascade = CascadeType.ALL)
-    private Set<User> members;
 
     public Event() {
     }
@@ -111,14 +104,6 @@ public class Event {
         this.id = id;
     }
 
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
     public String createInvitationLink() {
         String token = TokenGenerator.generateRandom(64);
         while (invitationTokens.contains(new InvitationToken(token))) {
@@ -130,18 +115,11 @@ public class Event {
         return String.format("/event/%d/join?invitationToken=%s", id, token);
     }
 
-    public void join(User user, InvitationToken invitationToken) {
+    public void join(InvitationToken invitationToken) {
         if(invitationTokens.contains(invitationToken)) {
-            members.add(user);
-            user.getEvents().add(this);
-
             this.invitationTokens.remove(invitationToken);
         } else {
             throw new IllegalArgumentException("Invalid or expired invitation token.");
         }
-    }
-
-    private Set<String> getInvitationTokens() {
-        return this.invitationTokens.stream().map(InvitationToken::getValue).collect(Collectors.toSet());
     }
 }
