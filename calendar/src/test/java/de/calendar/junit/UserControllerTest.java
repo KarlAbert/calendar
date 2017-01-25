@@ -1,6 +1,6 @@
 package de.calendar.junit;
 
-import de.calendar.controller.LoginController;
+import de.calendar.controller.UserController;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -11,9 +11,9 @@ import static org.junit.Assert.assertThat;
  * Created RegisterControllerTest in de.calendar.junit
  * by ARSTULKE on 19.01.2017.
  */
-public class LoginControllerTest {
+public class UserControllerTest {
     /**
-     * Spezifiziert das Verhalten von {@link LoginController#valid(JSONObject)}.
+     * Spezifiziert das Verhalten von {@link UserController#login(JSONObject)}.
      */
     @Test
     public void validatesdataPost() {
@@ -32,6 +32,6 @@ public class LoginControllerTest {
     }
 
     private boolean valid(JSONObject jsonObject) {
-        return LoginController.valid(jsonObject);
+        return UserController.login(jsonObject);
     }
 }

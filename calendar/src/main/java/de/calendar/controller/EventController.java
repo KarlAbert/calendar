@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
  * Created EventController in de.calendar.controller
  * by ARSTULKE on 19.01.2017.
  */
+@SuppressWarnings("unused")
 @RestController
 public class EventController {
     @Autowired
@@ -35,9 +36,9 @@ public class EventController {
             .put("end", event.getEndString())
             .put("id", event.getID());
 
-    @RequestMapping("/event/create")
+    @PostMapping("/event")
     public ResponseEntity<String> createEvent(@RequestParam(name = "token") String token, @RequestBody String dataString) {
-        return authorize(token, dataString, (user, data) -> {
+        return Authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
                 LocalDateTime endTMP = CalendarUtils.parse(data.has("end") ? data.getString("end") : null);
@@ -58,7 +59,7 @@ public class EventController {
                 eventRepository.save(event);
                 userRepository.save(user);
 
-                return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
+                return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>("You have to set the http body as json.\n" +
                         "The json object should contain the following keys:\n" +
@@ -69,12 +70,12 @@ public class EventController {
         });
     }
 
-    @RequestMapping("/event")
-    public ResponseEntity<String> getEvents(@RequestParam(name = "token") String token, @RequestParam(name = "from", required = false) String fromString, @RequestParam(name = "until", required = false) String untilString) {
-        return authorize(token, null, (user, jsonObject) -> {
+    @GetMapping("/event")
+    public ResponseEntity<String> getEvents(@RequestParam(name = "token") String token, @RequestParam(name = "id", required = false) String id, @RequestParam(name = "from", required = false) String fromString, @RequestParam(name = "until", required = false) String untilString) {
+        return Authorization.authorize(token, null, (user, jsonObject) -> {
             LocalDateTime fromTMP = CalendarUtils.parse(fromString);
             LocalDateTime untilTMP = CalendarUtils.parse(untilString);
-            if (fromTMP != null || untilTMP != null) {
+            if ((fromTMP != null || untilTMP != null) && id == null) {
                 LocalDateTime from;
                 LocalDateTime until;
                 if (fromTMP == null) {
@@ -100,15 +101,21 @@ public class EventController {
                         .map(mapper)
                         .collect(Collectors.toList()));
                 return new ResponseEntity<>(new JSONArray(events).toString(), HttpStatus.OK);
+            } else if (id != null) {
+                Event event = eventRepository.findOne(Long.valueOf(id));
+                if (!(user.getOwnerships().contains(event) || user.getMemberships().contains(event))) {
+                    return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
+                }
+                return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("You have to set the \"from\" or the \"until\" query param.\nIf you only set one the other would be 1 hour before/after the given param.", HttpStatus.BAD_REQUEST);
             }
         });
     }
 
-    @RequestMapping("/event/{id}/edit")
-    public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id, @RequestBody String dataString) {
-        return authorize(token, dataString, (user, data) -> {
+    @PutMapping("/event")
+    public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id, @RequestBody String dataString) {
+        return Authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
                 if (!user.getOwnerships().contains(event)) {
@@ -134,7 +141,7 @@ public class EventController {
 
                     eventRepository.save(event);
 
-                    return new ResponseEntity<>("", HttpStatus.OK);
+                    return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
                 }
             } else {
                 return new ResponseEntity<>("You have to set the http body as json.\n" +
@@ -146,40 +153,36 @@ public class EventController {
         });
     }
 
-    @RequestMapping("event/{id}/delete")
-    public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
-        return authorize(token, null, (user, data) -> {
+    @DeleteMapping("/event")
+    public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
+        return Authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
             if (!user.getOwnerships().contains(event)) {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
-            userRepository.findAll()
-                    .stream()
-                    .filter(user12 -> user12.getMemberships().contains(event) || user12.getOwnerships().contains(event))
-                    .forEach(user1 -> {
-                        user1.getMemberships()
-                                .stream()
-                                .filter(event1 -> event1.getID().equals(event.getID()))
-                                .forEach(event1 -> user1.getMemberships().remove(event1));
-
-                        user1.getOwnerships()
-                                .stream()
-                                .filter(event1 -> event1.getID().equals(event.getID()))
-                                .forEach(event1 -> user1.getOwnerships().remove(event1));
-                        userRepository.save(user1);
-                    });
-
+            for (User benutzer : userRepository.findAll()) {
+                for (Event ownerEvent : benutzer.getMemberships()) {
+                    if (ownerEvent.getID().equals(event.getID())) {
+                        benutzer.getMemberships().remove(ownerEvent);
+                    }
+                }
+                for (Event ownerEvent : benutzer.getOwnerships()) {
+                    if (ownerEvent.getID().equals(event.getID())) {
+                        benutzer.getOwnerships().remove(ownerEvent);
+                    }
+                }
+            }
             eventRepository.delete(event);
 
             return new ResponseEntity<>("", HttpStatus.OK);
         });
     }
 
-    @RequestMapping("event/{id}/invite")
-    public ResponseEntity<String> inviteEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
-        return authorize(token, null, (user, data) -> {
+    @PostMapping("event/invitation")
+    public ResponseEntity<String> inviteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
+        return Authorization.authorize(token, null, (user, data) -> {
             if (id == null || !StringUtils.isNumeric(id)) {
-                return new ResponseEntity<>("\"" + id + "\" is not a valid ID.", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("\"" + id + "\" is not a register ID.", HttpStatus.BAD_REQUEST);
             }
 
             Event event = eventRepository.findOne(Long.valueOf(id));
@@ -194,9 +197,9 @@ public class EventController {
         });
     }
 
-    @RequestMapping("event/{id}/join")
-    public ResponseEntity<String> joinEvent(@RequestParam(name = "token") String token, @RequestParam(name = "invitationToken") String invitationToken, @PathVariable("id") String id) {
-        return authorize(token, null, (user, data) -> {
+    @PutMapping("event/invitation")
+    public ResponseEntity<String> joinEvent(@RequestParam(name = "token") String token, @RequestParam(name = "invitationToken") String invitationToken, @RequestParam("id") String id) {
+        return Authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
             try {
                 user.getMemberships().add(event);
@@ -210,17 +213,6 @@ public class EventController {
         });
     }
 
-    @RequestMapping("event/{id}/get")
-    public ResponseEntity<String> getEvent(@RequestParam(name = "token") String token, @PathVariable("id") String id) {
-        return authorize(token, null, (user, data) -> {
-            Event event = eventRepository.findOne(Long.valueOf(id));
-            if (!(user.getOwnerships().contains(event) || user.getMemberships().contains(event))) {
-                return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
-            }
-            return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
-        });
-    }
-
     public static boolean valid(JSONObject data) {
         if (!data.has("title")) return false;
         if (!(data.has("start") || data.has("end"))) return false;
@@ -229,18 +221,5 @@ public class EventController {
             return false;
 
         return true;
-    }
-
-    private ResponseEntity<String> authorize(String token, String dataString, Function function) {
-        User user = userRepository.findOneByTokenValue(token);
-        if (user == null || user.getToken().isExpired()) {
-            return new ResponseEntity<>("Invalid or expired token.", HttpStatus.UNAUTHORIZED);
-        } else {
-            return function.doSomething(user, dataString == null ? null : new JSONObject(dataString));
-        }
-    }
-
-    private interface Function {
-        ResponseEntity<String> doSomething(User user, JSONObject data);
     }
 }

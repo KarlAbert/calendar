@@ -1,7 +1,6 @@
 package de.calendar.junit;
 
 import de.calendar.controller.EventController;
-import de.calendar.controller.LoginController;
 import org.json.JSONObject;
 import org.junit.Test;
 

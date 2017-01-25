@@ -30,6 +30,10 @@ public class TestUtils {
         return post(buildUrl(stringURL, token), data);
     }
 
+    public static Response put(String stringURL, String token, String id, JSONObject data) {
+        return readResponse(String.format("%s?token=%s&id=%s", stringURL, token, id), data, "PUT");
+    }
+
     public static Response post(String stringURL, JSONObject data) {
         return readResponse(stringURL, data, "POST");
     }
@@ -110,7 +114,7 @@ public class TestUtils {
                 .put("email", email)
                 .put("password", password);
 
-        return TestUtils.post("/register", json);
+        return TestUtils.post("/user", json);
     }
 
     public static Response login(String username, String password) {
@@ -118,6 +122,10 @@ public class TestUtils {
                 .put("username", username)
                 .put("password", password);
 
-        return TestUtils.post("/login", data);
+        return TestUtils.post("/user", data);
+    }
+
+    public static Response delete(String stringURL, String id, String token) {
+        return readResponse(String.format("%s?token=%s&id=%s", stringURL, token, id),null, "DELETE");
     }
 }

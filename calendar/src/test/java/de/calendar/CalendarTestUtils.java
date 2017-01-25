@@ -6,7 +6,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +22,7 @@ public class CalendarTestUtils {
                 .put("title", title)
                 .put("start", start)
                 .put("end", end);
-        return TestUtils.post("/event/create", token, eventJSON);
+        return TestUtils.post("/event", token, eventJSON);
     }
 
     public static JSONArray findAllEventsByDate(String from, String until, String token) {
@@ -61,15 +60,19 @@ public class CalendarTestUtils {
                 .put("title", event.getTitle())
                 .put("start", event.getStartString())
                 .put("end", event.getEndString());
-        return TestUtils.post("/event/" + event.getID() + "/edit", token, eventJSON);
+        return TestUtils.put("/event", token, event.getID().toString(), eventJSON);
     }
 
     public static Response deleteEvent(Event event, String token) {
-        return TestUtils.get("/event/" + event.getID() + "/delete", token);
+        return TestUtils.delete("/event",event.getID().toString(), token);
     }
 
     public static Response findOneEventByID(Long id, String token) {
-        String url = String.format("/event/%d/get", id);
+        String url = String.format("/event?id=%d", id);
         return TestUtils.get(url, token);
+    }
+
+    public static Response inviteToEvent(Long id, String token){
+        return TestUtils.post(String.format("/event/invitation?token=%s&id=%d", token, id),null);
     }
 }

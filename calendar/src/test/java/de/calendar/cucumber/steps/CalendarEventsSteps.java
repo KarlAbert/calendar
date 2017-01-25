@@ -8,12 +8,15 @@ import de.calendar.CalendarTestUtils;
 import de.calendar.Response;
 import de.calendar.model.Event;
 import de.calendar.utils.CalendarUtils;
+import org.hamcrest.CoreMatchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Map;
 
 import static de.calendar.TestUtils.tryLogin;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
@@ -114,7 +117,7 @@ public class CalendarEventsSteps {
     @Dann("^steht das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalender von TestUser$")
     public void stehtDasEreignisAmInDemKalenderVonTestUser(String title, String dateString) throws Throwable {
         token = tryLogin(token);
-        assertThat(saveResponse.getStatus(), is(200));
+        assertThat(saveResponse.getStatus(), anyOf(is(201),is(200)));
 
         JSONArray events = CalendarTestUtils.findAllEventsByDate(dateString + " 00:00", dateString + " 23:59", token);
         boolean contains1 = false;
@@ -171,7 +174,7 @@ public class CalendarEventsSteps {
     public void stehtDasEreignisVonUhrBisUhrInDemKalenderVonTestUser(String title, String startString, String endString) throws Throwable {
         token = tryLogin(token);
 
-        assertThat(this.saveResponse.getStatus(), is(200));
+        assertThat(this.saveResponse.getStatus(), anyOf(is(201),is(200)));
 
         Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, startString, endString, token);
         if (event == null) {

@@ -30,6 +30,7 @@ public class Event {
     @GeneratedValue
     private Long id;
 
+    @Size(max = 50)
     private String title;
 
     @Size(min = 10, max = 16)
@@ -112,7 +113,7 @@ public class Event {
 
         this.invitationTokens.add(new InvitationToken(token));
 
-        return String.format("/event/%d/join?invitationToken=%s", id, token);
+        return String.format("/event/invitation?invitationToken=%s&id=%d", token, id);
     }
 
     public void join(InvitationToken invitationToken) {

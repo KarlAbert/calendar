@@ -41,10 +41,7 @@ public class InviteSteps {
                 lastID = event.getID();
             }
         }
-
-        String url = String.format("/event/%s/invite", lastID);
-
-        response = TestUtils.get(url, token);
+        response = CalendarTestUtils.inviteToEvent(lastID, token);
         if (response.getStatus() == 200) {
             this.url = response.getJSONObject().getString("url");
         } else {

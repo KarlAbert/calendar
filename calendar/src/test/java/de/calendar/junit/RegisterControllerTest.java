@@ -1,6 +1,6 @@
 package de.calendar.junit;
 
-import de.calendar.controller.RegisterController;
+import de.calendar.controller.UserController;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ import static org.junit.Assert.assertThat;
  */
 public class RegisterControllerTest {
     /**
-     * Spezifiziert das Verhalten von {@link RegisterController#valid(JSONObject)}.
+     * Spezifiziert das Verhalten von {@link UserController#register(JSONObject)}.
      */
     @Test
     public void validatesdataPost() {
@@ -89,6 +89,6 @@ public class RegisterControllerTest {
     }
 
     private boolean valid(JSONObject jsonObject) {
-        return RegisterController.valid(jsonObject);
+        return UserController.register(jsonObject);
     }
 }
