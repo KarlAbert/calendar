@@ -13,17 +13,13 @@ public class Response {
     private final int status;
     private final String data;
 
-    public Response(int status, String data) {
+    Response(int status, String data) {
         this.status = status;
         this.data = data;
     }
 
     public int getStatus() {
         return status;
-    }
-
-    public String getRawdata() {
-        return data;
     }
 
     public JSONObject getJSONObject() {
@@ -40,5 +36,9 @@ public class Response {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public boolean isEmpty() {
+        return data.length() == 0;
     }
 }

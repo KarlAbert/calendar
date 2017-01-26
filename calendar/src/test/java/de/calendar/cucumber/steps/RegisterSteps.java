@@ -12,6 +12,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * calendar:
@@ -46,7 +47,7 @@ public class RegisterSteps {
     @Dann("^ist das Registrieren erfolgreich$")
     public void istDasRegistrierenErfolgreich() throws Throwable {
         assertThat(response.getStatus(), is(201));
-        assertThat(response.getRawdata(), is(""));
+        assertTrue(response.isEmpty());
     }
     //endregion
 }
