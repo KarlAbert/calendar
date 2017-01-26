@@ -6,12 +6,14 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class Authorization {
     @Autowired
-    private static UserRepository userRepository;
+    private UserRepository userRepository;
 
-    public static ResponseEntity<String> authorize(String token, String dataString, Function function) {
+    public ResponseEntity<String> authorize(String token, String dataString, Function function) {
         User user = userRepository.findOneByTokenValue(token);
         if (user == null || user.getToken().isExpired()) {
             return new ResponseEntity<>("Invalid or expired token.", HttpStatus.UNAUTHORIZED);

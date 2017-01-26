@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,9 +37,12 @@ public class EventController {
             .put("end", event.getEndString())
             .put("id", event.getID());
 
+    @Autowired
+    private Authorization authorization;
+
     @PostMapping("/event")
     public ResponseEntity<String> createEvent(@RequestParam(name = "token") String token, @RequestBody String dataString) {
-        return Authorization.authorize(token, dataString, (user, data) -> {
+        return authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
                 LocalDateTime endTMP = CalendarUtils.parse(data.has("end") ? data.getString("end") : null);
@@ -72,7 +76,7 @@ public class EventController {
 
     @GetMapping("/event")
     public ResponseEntity<String> getEvents(@RequestParam(name = "token") String token, @RequestParam(name = "id", required = false) String id, @RequestParam(name = "from", required = false) String fromString, @RequestParam(name = "until", required = false) String untilString) {
-        return Authorization.authorize(token, null, (user, jsonObject) -> {
+        return authorization.authorize(token, null, (user, jsonObject) -> {
             LocalDateTime fromTMP = CalendarUtils.parse(fromString);
             LocalDateTime untilTMP = CalendarUtils.parse(untilString);
             if ((fromTMP != null || untilTMP != null) && id == null) {
@@ -115,7 +119,7 @@ public class EventController {
 
     @PutMapping("/event")
     public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id, @RequestBody String dataString) {
-        return Authorization.authorize(token, dataString, (user, data) -> {
+        return authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
                 if (!user.getOwnerships().contains(event)) {
@@ -155,22 +159,19 @@ public class EventController {
 
     @DeleteMapping("/event")
     public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
-        return Authorization.authorize(token, null, (user, data) -> {
+        return authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
             if (!user.getOwnerships().contains(event)) {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
             for (User benutzer : userRepository.findAll()) {
-                for (Event ownerEvent : benutzer.getMemberships()) {
-                    if (ownerEvent.getID().equals(event.getID())) {
-                        benutzer.getMemberships().remove(ownerEvent);
-                    }
-                }
-                for (Event ownerEvent : benutzer.getOwnerships()) {
-                    if (ownerEvent.getID().equals(event.getID())) {
-                        benutzer.getOwnerships().remove(ownerEvent);
-                    }
-                }
+                new HashSet<>(benutzer.getMemberships()).stream().filter(ownerEvent -> ownerEvent.getID().equals(event.getID())).forEach(ownerEvent -> {
+                    benutzer.getMemberships().remove(ownerEvent);
+                });
+                new HashSet<>(benutzer.getOwnerships()).stream().filter(ownerEvent -> ownerEvent.getID().equals(event.getID())).forEach(ownerEvent -> {
+                    benutzer.getOwnerships().remove(ownerEvent);
+                });
+                userRepository.save(user);
             }
             eventRepository.delete(event);
 
@@ -180,7 +181,7 @@ public class EventController {
 
     @PostMapping("event/invitation")
     public ResponseEntity<String> inviteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
-        return Authorization.authorize(token, null, (user, data) -> {
+        return authorization.authorize(token, null, (user, data) -> {
             if (id == null || !StringUtils.isNumeric(id)) {
                 return new ResponseEntity<>("\"" + id + "\" is not a register ID.", HttpStatus.BAD_REQUEST);
             }
@@ -199,7 +200,7 @@ public class EventController {
 
     @PutMapping("event/invitation")
     public ResponseEntity<String> joinEvent(@RequestParam(name = "token") String token, @RequestParam(name = "invitationToken") String invitationToken, @RequestParam("id") String id) {
-        return Authorization.authorize(token, null, (user, data) -> {
+        return authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
             try {
                 user.getMemberships().add(event);

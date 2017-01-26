@@ -34,6 +34,10 @@ public class TestUtils {
         return readResponse(String.format("%s?token=%s&id=%s", stringURL, token, id), data, "PUT");
     }
 
+    public static Response put(String stringURL, String token, JSONObject data) {
+        return readResponse(String.format("%s?token=%s", stringURL, token), data, "PUT");
+    }
+
     public static Response post(String stringURL, JSONObject data) {
         return readResponse(stringURL, data, "POST");
     }

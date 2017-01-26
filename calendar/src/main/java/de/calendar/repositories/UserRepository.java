@@ -1,5 +1,6 @@
 package de.calendar.repositories;
 
+import de.calendar.model.Event;
 import de.calendar.model.User;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -20,4 +21,6 @@ public interface UserRepository extends CrudRepository<User, Long> {
     User findOneByTokenValue(String value);
 
     List<User> findAll();
+
+    List<User> findAllByOwnershipsContaining(Event event);
 }

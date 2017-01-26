@@ -52,7 +52,7 @@ public class InviteSteps {
 
     @Und("^\"([^\"]*)\" den Einladelink aufruft$")
     public void denEinladelinkAufruft(String executer) throws Throwable {
-        response = TestUtils.get(url, forceLogin(null, executer, "passwort"));
+        response = TestUtils.put(url, forceLogin(null, executer, "passwort"), null);
     }
 
     @Dann("^nimmt \"([^\"]*)\" an dem Ereignis \"([^\"]*)\" am \"([^\"]*)\" von TestUser teil$")
