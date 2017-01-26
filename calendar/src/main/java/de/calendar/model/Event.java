@@ -43,16 +43,20 @@ public class Event implements Serializable {
         this.title = title;
         setStart(start);
         setEnd(end);
+
         this.owner = new ArrayList<>();
         this.subscribers = new ArrayList<>();
+        this.invitations = new ArrayList<>();
     }
 
     public Event(String title, LocalDateTime start, LocalDateTime end, User owner) {
         this.title = title;
         setStart(start);
         setEnd(end);
+
         this.owner = new ArrayList<>();
         this.subscribers = new ArrayList<>();
+        this.invitations = new ArrayList<>();
 
         this.owner.add(owner);
     }
@@ -85,6 +89,10 @@ public class Event implements Serializable {
         this.title = title;
         this.start = CalendarUtils.format(start);
         this.end = CalendarUtils.format(end);
+
+        this.invitations = new ArrayList<>();
+        this.owner = new ArrayList<>();
+        this.subscribers = new ArrayList<>();
     }
 
     public Long getId() {
@@ -164,4 +172,25 @@ public class Event implements Serializable {
         return "Event{" + " id=" + id + ", start=" + start + ", end=" + end + ", title=" + title + ", owner=" + owner + ", subscribers=" + subscribers + '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Event event = (Event) o;
+
+        if (!start.equals(event.start)) return false;
+        if (!end.equals(event.end)) return false;
+        if (!title.equals(event.title)) return false;
+        return invitations.equals(event.invitations);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = start.hashCode();
+        result = 31 * result + end.hashCode();
+        result = 31 * result + title.hashCode();
+        result = 31 * result + invitations.hashCode();
+        return result;
+    }
 }

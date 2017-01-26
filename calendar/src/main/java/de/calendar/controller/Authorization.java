@@ -9,11 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Authorization {
+class Authorization {
     @Autowired
     private UserRepository userRepository;
 
-    public ResponseEntity<String> authorize(String token, String dataString, Function function) {
+    ResponseEntity<String> authorize(String token, String dataString, Function function) {
         User user = userRepository.findOneByTokenValue(token);
         if (user == null || user.getToken().isExpired()) {
             return new ResponseEntity<>("Invalid or expired token.", HttpStatus.UNAUTHORIZED);

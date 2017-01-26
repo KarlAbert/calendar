@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +48,7 @@ public class EventController {
     private Authorization authorization;
 
     @PostMapping("/event")
-    public ResponseEntity<String> createEvent(@RequestParam(name = "token") String token, @RequestBody String dataString) {
+    public ResponseEntity<String> createEvent(@RequestHeader(name = "Authorization") String token, @RequestBody String dataString) {
         return authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
@@ -80,51 +81,62 @@ public class EventController {
         });
     }
 
-    @GetMapping("/event")
-    public ResponseEntity<String> getEvents(@RequestParam(name = "token") String token, @RequestParam(name = "id", required = false) String id, @RequestParam(name = "from", required = false) String fromString, @RequestParam(name = "until", required = false) String untilString) {
+    @GetMapping("/event/{id}")
+    public ResponseEntity<String> getEvent(@RequestHeader(name = "Authorization") String token, @PathVariable(name = "id") String id) {
         return authorization.authorize(token, null, (user, jsonObject) -> {
-            LocalDateTime fromTMP = CalendarUtils.parse(fromString);
-            LocalDateTime untilTMP = CalendarUtils.parse(untilString);
-            if ((fromTMP != null || untilTMP != null) && id == null) {
-                LocalDateTime from;
-                LocalDateTime until;
-                if (fromTMP == null) {
-                    from = untilTMP.minusHours(1L);
-                    until = untilTMP;
-                } else if (untilTMP == null) {
-                    from = fromTMP;
-                    until = fromTMP.plusHours(1L);
-                } else {
-                    from = fromTMP;
-                    until = untilTMP;
-                }
-
-                List<JSONObject> events = user.getSubscriptions()
-                        .stream()
-                        .filter(event -> CalendarUtils.isEventBetween(event, from, until))
-                        .map(mapper)
-                        .collect(Collectors.toList());
-
-                events.addAll(user.getOwningevents()
-                        .stream()
-                        .filter(event -> CalendarUtils.isEventBetween(event, from, until))
-                        .map(mapper)
-                        .collect(Collectors.toList()));
-                return new ResponseEntity<>(new JSONArray(events).toString(), HttpStatus.OK);
-            } else if (id != null) {
+            if (id != null) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
                 if (!(user.getOwningevents().contains(event) || user.getSubscriptions().contains(event))) {
                     return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
                 }
                 return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("You have to set the \"from\" or the \"until\" query param.\nIf you only set one the other would be 1 hour before/after the given param.", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("You have to set the 'id' like /event/{id}.", HttpStatus.BAD_REQUEST);
             }
         });
     }
 
-    @PutMapping("/event")
-    public ResponseEntity<String> editEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id, @RequestBody String dataString) {
+    @GetMapping("/event")
+    public ResponseEntity<String> getEvents(@RequestHeader(name = "Authorization") String token, @RequestParam(name = "from", required = false) String fromString, @RequestParam(name = "until", required = false) String untilString) {
+        return authorization.authorize(token, null, (user, jsonObject) -> {
+            LocalDateTime fromTMP = CalendarUtils.parse(fromString);
+            LocalDateTime untilTMP = CalendarUtils.parse(untilString);
+            if ((fromTMP != null || untilTMP != null)) {
+                fromTMP = LocalDateTime.MIN;
+                untilTMP = LocalDateTime.MAX;
+            }
+
+            LocalDateTime from;
+            LocalDateTime until;
+            if (fromTMP == null) {
+                from = untilTMP.minusHours(1L);
+                until = untilTMP;
+            } else if (untilTMP == null) {
+                from = fromTMP;
+                until = fromTMP.plusHours(1L);
+            } else {
+                from = fromTMP;
+                until = untilTMP;
+            }
+
+            List<JSONObject> events = user.getSubscriptions()
+                    .stream()
+                    .filter(event -> CalendarUtils.isEventBetween(event, from, until))
+                    .map(mapper)
+                    .collect(Collectors.toList());
+
+            events.addAll(user.getOwningevents()
+                    .stream()
+                    .filter(event -> CalendarUtils.isEventBetween(event, from, until))
+                    .map(mapper)
+                    .collect(Collectors.toList()));
+            return new ResponseEntity<>(new JSONArray(events).toString(), HttpStatus.OK);
+
+        });
+    }
+
+    @PutMapping("/event/{id}")
+    public ResponseEntity<String> editEvent(@RequestHeader(name = "Authorization") String token, @PathVariable("id") String id, @RequestBody String dataString) {
         return authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
@@ -163,33 +175,32 @@ public class EventController {
         });
     }
 
-    @DeleteMapping("/event")
-    public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
+    @DeleteMapping("/event/{id}")
+    public ResponseEntity<String> deleteEvent(@RequestHeader(name = "Authorization") String token, @PathVariable("id") String id) {
         return authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
             if (!user.getOwningevents().contains(event)) {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
-            for (User benutzer : userRepository.findAll()) {
-                new HashSet<>(benutzer.getSubscriptions()).stream().filter(ownerEvent -> ownerEvent.getId().equals(event.getId())).forEach(ownerEvent -> {
-                    benutzer.getSubscriptions().remove(ownerEvent);
-                });
-                new HashSet<>(benutzer.getOwningevents()).stream().filter(ownerEvent -> ownerEvent.getId().equals(event.getId())).forEach(ownerEvent -> {
-                    benutzer.getOwningevents().remove(ownerEvent);
-                });
-                userRepository.save(user);
-            }
+            new HashSet<>(event.getOwner()).forEach(owner -> {
+                owner.getOwningevents().remove(event);
+                userRepository.save(owner);
+            });
+            new HashSet<>(event.getSubscribers()).forEach(subscriber -> {
+                subscriber.getSubscriptions().remove(event);
+                userRepository.save(subscriber);
+            });
             eventRepository.delete(event);
 
-            return new ResponseEntity<>("", HttpStatus.OK);
+            return new ResponseEntity<>("", HttpStatus.NO_CONTENT);
         });
     }
 
-    @PostMapping("event/invitation")
-    public ResponseEntity<String> inviteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
+    @PostMapping("event/{id}/user")
+    public ResponseEntity<String> inviteEventUser(@RequestHeader(name = "Authorization") String token, @PathVariable("id") String id) {
         return authorization.authorize(token, null, (user, data) -> {
             if (id == null || !StringUtils.isNumeric(id)) {
-                return new ResponseEntity<>("\"" + id + "\" is not a register ID.", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("\"" + id + "\" is not a event ID.", HttpStatus.BAD_REQUEST);
             }
 
             Event event = eventRepository.findOne(Long.valueOf(id));
@@ -202,20 +213,24 @@ public class EventController {
                 event.getInvitations().add(new Invitation(invitationToken));
                 eventRepository.save(event);
 
-                return new ResponseEntity<>(new JSONObject().put("url", String.format("/event/invitation?invitationToken=%s&id=%s", invitationToken, id)).toString(), HttpStatus.OK);
+                return new ResponseEntity<>(new JSONObject().put("url", String.format("/event/%s/invitation/%s", id, invitationToken)).toString(), HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
         });
     }
 
-    @PutMapping("event/invitation")
-    public ResponseEntity<String> joinEvent(@RequestParam(name = "token") String token, @RequestParam(name = "invitationToken") String invitationToken, @RequestParam("id") String id) {
+    @PutMapping("event/{id}/user/{invitationToken}")
+    public ResponseEntity<String> createEventUser(@RequestHeader(name = "Authorization") String token, @PathVariable("id") String id, @PathVariable(name = "invitationToken") String invitationToken) {
         return authorization.authorize(token, null, (user, data) -> {
+            if (id == null) {
+                return new ResponseEntity<>("You have to set the 'id' like 'event/{id}/...'.", HttpStatus.BAD_REQUEST);
+            }
             Event event = eventRepository.findOne(Long.valueOf(id));
             Invitation invitation = new Invitation(invitationToken);
             if (event.getInvitations().contains(invitation)) {
                 user.getSubscriptions().add(event);
+                event.getSubscribers().add(user);
                 event.getInvitations().remove(invitation);
             } else {
                 return new ResponseEntity<>("Invalid or expired invitation token.", HttpStatus.FORBIDDEN);
@@ -227,11 +242,43 @@ public class EventController {
         });
     }
 
+    @GetMapping("event/{id}/user")
+    public ResponseEntity<String> getEventUser(@RequestHeader(name = "Authorization") String token, @PathVariable("id") String id) {
+        return authorization.authorize(token, null, (user, data) -> {
+            if (id == null || !StringUtils.isNumeric(id)) {
+                return new ResponseEntity<>("\"" + id + "\" is not a event ID.", HttpStatus.BAD_REQUEST);
+            }
+
+            Event event = eventRepository.findOne(Long.valueOf(id));
+            if (event.getOwner().contains(user) || event.getSubscribers().contains(user)) {
+                JSONArray arr = new JSONArray();
+
+                Consumer<? super User> userMapping = (Consumer<User>) member -> {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("username", member.getUsername());
+                    jsonObject.put("firstname", member.getFirstname());
+                    jsonObject.put("lastname", member.getLastname());
+
+                    arr.put(arr.length(), jsonObject);
+                };
+
+                event.getSubscribers().forEach(userMapping);
+                event.getOwner().forEach(userMapping);
+
+                return new ResponseEntity<>(arr.toString(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
+            }
+        });
+    }
+
+    @SuppressWarnings("RedundantIfStatement")
     public static boolean valid(JSONObject data) {
         if (!data.has("title")) return false;
         if (!(data.has("start") || data.has("end"))) return false;
 
-        if (CalendarUtils.parse(data.has("start") ? data.getString("start") : null) == null && CalendarUtils.parse(data.has("end") ? data.getString("end") : null) == null)
+        if (CalendarUtils.parse(data.has("start") ? data.getString("start") : null) == null
+                && CalendarUtils.parse(data.has("end") ? data.getString("end") : null) == null)
             return false;
 
         return true;

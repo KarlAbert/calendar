@@ -1,6 +1,5 @@
 package de.calendar;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -9,56 +8,41 @@ import java.net.URL;
 
 /**
  * calendar:
- * * de.calendar:
- * * * Created by KAABERT on 18.01.2017.
+ * * de.calendar.cucumber:
+ * * * Created by KAABERT on 26.01.2017.
  */
-public class TestUtils {
+class TestUtils {
 
-    private static String DOMAIN = "http://localhost:8080";
-    private static String testUsername = "TestUser1";
-    private static String testUserPassword = "Password1";
+    private static final String DOMAIN = "http://localhost:8080";
 
-    private static String buildUrl(String stringUrl, String token) {
-        stringUrl += !stringUrl.contains("?") ? "?" : "&";
-        stringUrl += "token=";
-        stringUrl += token;
-
-        return stringUrl;
+    static Response post(String url, String token, JSONObject data) {
+        return readResponse(url, token, data, "POST");
     }
 
-    public static Response post(String stringURL, String token, JSONObject data) {
-        return post(buildUrl(stringURL, token), data);
+    static Response put(String url, String token, JSONObject data) {
+        return readResponse(url, token, data, "PUT");
     }
 
-    public static Response put(String stringURL, String token, String id, JSONObject data) {
-        return readResponse(String.format("%s?token=%s&id=%s", stringURL, token, id), data, "PUT");
+    static Response delete(String url, String token) {
+        return readResponse(url, token, null, "DELETE");
     }
 
-    public static Response put(String stringURL, String token, JSONObject data) {
-        return readResponse(String.format("%s?token=%s", stringURL, token), data, "PUT");
+    static Response get(String url, String token) {
+        return readResponse(url, token, null, "GET");
     }
 
-    public static Response post(String stringURL, JSONObject data) {
-        return readResponse(stringURL, data, "POST");
-    }
-
-    public static Response get(String stringURL, String token) {
-        return get(buildUrl(stringURL, token));
-    }
-
-    public static Response get(String stringURL) {
-        return readResponse(stringURL, null, "GET");
-    }
-
-    private static Response readResponse(String stringURL, JSONObject data, String httpMethod) {
+    private static Response readResponse(String stringURL, String token, JSONObject data, String httpMethod) {
         try {
             //post data
             if (!DOMAIN.endsWith("/") && !stringURL.startsWith("/")) {
                 stringURL = "/" + stringURL;
             }
-            String url = DOMAIN + stringURL;
+            String url = DOMAIN + stringURL.replaceAll(" ", "+");
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(httpMethod);
+            if (token != null) {
+                connection.setRequestProperty("Authorization", token);
+            }
             if (data != null) {
                 connection.setRequestProperty("Content-type", "application/json");
                 connection.setDoOutput(true);
@@ -87,49 +71,5 @@ public class TestUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static String tryLogin(String token, String username, String password) {
-        if (token == null) {
-            JSONObject jsonObject = login(username, password).getJSONObject();
-            token = jsonObject.getString("token");
-        }
-        return token;
-    }
-
-    public static String tryLogin(String token) {
-        return tryLogin(token, testUsername, testUserPassword);
-    }
-
-    public static String forceLogin(String token, String username, String password) {
-        try {
-            return tryLogin(token, username, password);
-        } catch (JSONException e) {
-            tryRegister("Teeeeest", "Usssser", username, username + "@test.com", password);
-            return tryLogin(token, username, password);
-        }
-    }
-
-    private static Response tryRegister(String firstname, String lastname, String username, String email, String password) {
-        JSONObject json = new JSONObject()
-                .put("firstname", firstname)
-                .put("lastname", lastname)
-                .put("username", username)
-                .put("email", email)
-                .put("password", password);
-
-        return TestUtils.post("/user", json);
-    }
-
-    public static Response login(String username, String password) {
-        JSONObject data = new JSONObject()
-                .put("username", username)
-                .put("password", password);
-
-        return TestUtils.post("/user", data);
-    }
-
-    public static Response delete(String stringURL, String id, String token) {
-        return readResponse(String.format("%s?token=%s&id=%s", stringURL, token, id),null, "DELETE");
     }
 }

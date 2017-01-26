@@ -6,11 +6,8 @@ import cucumber.api.java.de.Und;
 import cucumber.api.java.de.Wenn;
 import de.calendar.CalendarTestUtils;
 import de.calendar.Response;
-import de.calendar.TestUtils;
 import de.calendar.model.Event;
 
-import static de.calendar.TestUtils.forceLogin;
-import static de.calendar.TestUtils.tryLogin;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
@@ -20,44 +17,47 @@ import static org.junit.Assert.assertThat;
  * * * Created by KAABERT on 23.01.2017.
  */
 public class InviteSteps {
-    private String token;
     private Response response;
-    private String url;
 
     private Long lastID;
 
+    private Long joinID;
+    private String invitationToken;
+
     @Gegebensei("^das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalendar von \"([^\"]*)\"$")
     public void dasGanztägigeEreignisAmInDemKalendarVon(String title, String date, String executer) throws Throwable {
-        Response response = CalendarTestUtils.createDaylongEvent(title, date, forceLogin(null, executer, "passwort"));
+        Response response = CalendarTestUtils.createEvent(new Event(title, date + " 00:00", date + " 23:59"), CalendarTestUtils.registerAndLogin(executer));
         lastID = response.getJSONObject().getLong("id");
     }
 
     @Wenn("^TestUser den Einladelink vom Ereignis \"([^\"]*)\" am \"([^\"]*)\" generiert$")
     public void testuserDenEinladelinkVomEreignisAmGeneriert(String title, String date) throws Throwable {
-        token = tryLogin(null);
+        String token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         if (lastID == null) {
-            Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, date + " 00:00", date + " 23:59", token);
+            Event event = CalendarTestUtils.findEvent(title, date + " 00:00", date + " 23:59", token);
             if(event != null){
                 lastID = event.getId();
             }
         }
-        response = CalendarTestUtils.inviteToEvent(lastID, token);
-        if (response.getStatus() == 200) {
-            this.url = response.getJSONObject().getString("url");
+        response = CalendarTestUtils.inviteEvent(lastID, token);
+        if (response.getStatus() == 201) {
+            this.invitationToken = response.getJSONObject().getString("invitationToken");
+            this.joinID = lastID;
         } else {
-            this.url = null;
+            this.invitationToken = null;
+            this.joinID = null;
         }
         lastID = null;
     }
 
     @Und("^\"([^\"]*)\" den Einladelink aufruft$")
     public void denEinladelinkAufruft(String executer) throws Throwable {
-        response = TestUtils.put(url, forceLogin(null, executer, "passwort"), null);
+        response = CalendarTestUtils.joinEvent(joinID, invitationToken, CalendarTestUtils.registerAndLogin(executer));
     }
 
     @Dann("^nimmt \"([^\"]*)\" an dem Ereignis \"([^\"]*)\" am \"([^\"]*)\" von TestUser teil$")
     public void nimmtAnDemEreignisAmVonTestUserTeil(String executer, String title, String date) throws Throwable {
-        CalendarTestUtils.findOneEventByTitleAndDate(title, date + " 00:00", date + " 23:59", tryLogin(null, executer, "passwort"));
+        CalendarTestUtils.findEvent(title, date + " 00:00", date + " 23:59", CalendarTestUtils.login(executer, "passwort").getJSONObject().getString("token"));
     }
 
     @Dann("^wird die Anfrage abgelehnt$")

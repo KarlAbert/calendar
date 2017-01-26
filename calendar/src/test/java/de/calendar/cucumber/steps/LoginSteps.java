@@ -2,8 +2,8 @@ package de.calendar.cucumber.steps;
 
 import cucumber.api.java.de.Dann;
 import cucumber.api.java.de.Wenn;
+import de.calendar.CalendarTestUtils;
 import de.calendar.Response;
-import de.calendar.TestUtils;
 import org.json.JSONObject;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -21,7 +21,7 @@ public class LoginSteps {
 
     @Wenn("^man sich mit dem Benutzername \"([^\"]*)\" und dem Passwort \"([^\"]*)\" anmeldet$")
     public void manSichMitDemBenutzernameUndDemPasswortAnmeldet(String username, String password) throws Throwable {
-        response = TestUtils.login(username, password);
+        response = CalendarTestUtils.login(username, password);
     }
 
     @Dann("^wird der Zugriff verweigert$")

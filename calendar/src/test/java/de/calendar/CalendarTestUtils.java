@@ -1,78 +1,106 @@
 package de.calendar;
 
 import de.calendar.model.Event;
+import de.calendar.model.User;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Created CalendarTestUtils in de.calendar.cucumber
- * by ARSTULKE on 19.01.2017.
+ * calendar:
+ * * de.calendar:
+ * * * Created by KAABERT on 26.01.2017.
  */
 public class CalendarTestUtils {
-    public static Response createDaylongEvent(String title, String dateString, String token) {
-        return createTimespanEvent(title, dateString + " 00:00", dateString + " 23:59", token);
+
+    public static String testUsername = "TestUser1";
+    public static String testUserPassword = "Password1";
+    private static Function<? super JSONObject, Event> eventMapping = jsonObject -> {
+        Event event = new Event(
+                jsonObject.getString("title"),
+                jsonObject.getString("start"),
+                jsonObject.getString("end"));
+                event.setId(jsonObject.getLong("id"));
+        return event;
+    };
+
+    public static Response register(User user) {
+        return TestUtils.post("/user", null, new JSONObject()
+                .put("username", user.getUsername())
+                .put("firstname", user.getFirstname())
+                .put("lastname", user.getLastname())
+                .put("email", user.getEmail())
+                .put("password", user.getPassword()));
     }
 
-    public static Response createTimespanEvent(String title, String start, String end, String token) {
-        JSONObject eventJSON = new JSONObject()
-                .put("title", title)
-                .put("start", start)
-                .put("end", end);
-        return TestUtils.post("/event", token, eventJSON);
+    public static Response login(String username, String password) {
+        return TestUtils.post("/user", null, new JSONObject()
+                .put("username", username)
+                .put("password", password));
+
     }
 
-    public static JSONArray findAllEventsByDate(String from, String until, String token) {
-        token = TestUtils.tryLogin(token);
-        String url = String.format("/event?from=%s&until=%s", from, until);
-        url = url.replace(" ", "%20");
-        Response response = TestUtils.get(url, token);
-        return response.getJSONArray();
-    }
-
-    public static Event findOneEventByTitleAndDate(String title, String from, String until, String token) {
-        List<Event> eventList = new ArrayList<>();
-        JSONArray events = CalendarTestUtils.findAllEventsByDate(from, until, token);
-        for (int i = 0; i < events.length(); i++) {
-            JSONObject event = events.getJSONObject(i);
-            Event eventObject = new Event(event.getString("title"), event.getString("start"), event.getString("end"));
-            eventObject.setId(event.getLong("id"));
-            eventList.add(eventObject);
-        }
-
-        eventList = eventList.stream().filter(event -> event.getTitle().equals(title) &&
-                (event.getStartString().equals(from) || from == null) &&
-                (event.getEndString().equals(until) || until == null)).collect(Collectors.toList());
-        if (eventList.size() > 1) {
-            throw new RuntimeException("Multiple Elements");
-        } else if (eventList.size() == 0) {
-            return null;
-        } else {
-            return eventList.get(0);
-        }
-    }
-
-    public static Response saveEvent(Event event, String token) {
-        JSONObject eventJSON = new JSONObject()
+    public static Response createEvent(Event event, String token) {
+        return TestUtils.post("/event", token, new JSONObject()
                 .put("title", event.getTitle())
                 .put("start", event.getStartString())
-                .put("end", event.getEndString());
-        return TestUtils.put("/event", token, event.getId().toString(), eventJSON);
+                .put("end", event.getEndString()));
     }
 
-    public static Response deleteEvent(Event event, String token) {
-        return TestUtils.delete("/event",event.getId().toString(), token);
+    public static Event getEvent(Long id, String token) {
+        return eventMapping.apply(TestUtils.get("/event/" + id, token).getJSONObject());
     }
 
-    public static Response findOneEventByID(Long id, String token) {
-        String url = String.format("/event?id=%d", id);
-        return TestUtils.get(url, token);
+    public static Response deleteEvent(Long id, String token) {
+        return TestUtils.delete("/event/" + id, token);
     }
 
-    public static Response inviteToEvent(Long id, String token){
-        return TestUtils.post(String.format("/event/invitation?token=%s&id=%d", token, id),null);
+    public static Response editEvent(Long id, Event event, String token) {
+        return TestUtils.put("/event/" + id, token, new JSONObject()
+                .put("title", event.getTitle())
+                .put("start", event.getStartString())
+                .put("end", event.getEndString()));
+    }
+
+    public static Response inviteEvent(Long id, String token) {
+        return TestUtils.post("/event/" + id + "/user", token, null);
+    }
+
+    public static Response joinEvent(Long id, String invitationToken, String token) {
+        return TestUtils.put("/event/" + id + "/user/" + invitationToken, token, null);
+    }
+
+    public static Event findEvent(String title, String from, String until, String token) {
+        List<Event> all = findEvent(from, until, token)
+                .stream()
+                .filter(event -> event.getTitle().equals(title) && event.getStartString().equals(from) && event.getEndString().equals(until))
+                .collect(Collectors.toList());
+
+        if (all.size() > 1) {
+            throw new RuntimeException("Multiple Elements");
+        } else if (all.size() == 0) {
+            return null;
+        } else {
+            return all.get(0);
+        }
+    }
+
+    public static List<Event> findEvent(String from, String until, String token) {
+        JSONArray arr = TestUtils.get(String.format("/event?from=%s&until=%s", from, until), token).getJSONArray();
+        List<JSONObject> list = new ArrayList<>();
+        for (int i = 0; i < arr.length(); i++) {
+            list.add(arr.getJSONObject(i));
+        }
+
+        return list.stream().map(eventMapping).collect(Collectors.toList());
+    }
+
+    public static String registerAndLogin(String username) {
+        register(new User("Teeeeest", "Usssser", username, username + "@generated.com", "passwort"));
+        return login(username, "passwort").getJSONObject().getString("token");
     }
 }

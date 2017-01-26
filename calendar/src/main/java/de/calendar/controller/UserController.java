@@ -25,7 +25,7 @@ public class UserController {
     private Authorization authorization;
 
     @PostMapping("/user")
-    public ResponseEntity<String> userLogin(@RequestBody String dataString) {
+    public ResponseEntity<String> loginOrRegister(@RequestBody String dataString) {
         JSONObject data = new JSONObject(dataString);
         if (register(data)) {
             User user = new User(data);
@@ -89,8 +89,8 @@ public class UserController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<String> getUser(@RequestParam(name= "token") String token) {
+    @GetMapping("/user")
+    public ResponseEntity<String> getUser(@RequestHeader(name = "Authorization") String token) {
         return authorization.authorize(token, null, (user, data) -> new ResponseEntity<>(new JSONObject()
                 .put("username", user.getUsername())
                 .put("email", user.getEmail())
