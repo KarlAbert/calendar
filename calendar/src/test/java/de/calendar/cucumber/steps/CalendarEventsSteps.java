@@ -1,6 +1,5 @@
 package de.calendar.cucumber.steps;
 
-import cucumber.api.PendingException;
 import cucumber.api.java.de.Dann;
 import cucumber.api.java.de.Gegebensei;
 import cucumber.api.java.de.Wenn;
@@ -8,7 +7,6 @@ import de.calendar.CalendarTestUtils;
 import de.calendar.Response;
 import de.calendar.model.Event;
 import de.calendar.utils.CalendarUtils;
-import org.hamcrest.CoreMatchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -42,7 +40,7 @@ public class CalendarEventsSteps {
             Response response = CalendarTestUtils.createDaylongEvent(title, dateString, token);
             lastID = response.getJSONObject().getLong("id");
         } else{
-            lastID = event.getID();
+            lastID = event.getId();
         }
     }
     //endregion
@@ -66,8 +64,8 @@ public class CalendarEventsSteps {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         }
         event.setTitle(title2);
-        event.setStartString(dateString2 + " 00:00");
-        event.setEndString(dateString2 + " 23:59");
+        event.setStart(dateString2 + " 00:00");
+        event.setEnd(dateString2 + " 23:59");
 
         this.saveResponse = CalendarTestUtils.saveEvent(event, token);
     }
@@ -162,8 +160,8 @@ public class CalendarEventsSteps {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         } else {
             event.setTitle(title2);
-            event.setStartString(startString2);
-            event.setEndString(endString2);
+            event.setStart(startString2);
+            event.setEnd(endString2);
             this.saveResponse = CalendarTestUtils.saveEvent(event, token);
         }
     }

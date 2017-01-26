@@ -39,7 +39,7 @@ public class CalendarTestUtils {
         for (int i = 0; i < events.length(); i++) {
             JSONObject event = events.getJSONObject(i);
             Event eventObject = new Event(event.getString("title"), event.getString("start"), event.getString("end"));
-            eventObject.setID(event.getLong("id"));
+            eventObject.setId(event.getLong("id"));
             eventList.add(eventObject);
         }
 
@@ -60,11 +60,11 @@ public class CalendarTestUtils {
                 .put("title", event.getTitle())
                 .put("start", event.getStartString())
                 .put("end", event.getEndString());
-        return TestUtils.put("/event", token, event.getID().toString(), eventJSON);
+        return TestUtils.put("/event", token, event.getId().toString(), eventJSON);
     }
 
     public static Response deleteEvent(Event event, String token) {
-        return TestUtils.delete("/event",event.getID().toString(), token);
+        return TestUtils.delete("/event",event.getId().toString(), token);
     }
 
     public static Response findOneEventByID(Long id, String token) {

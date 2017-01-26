@@ -1,11 +1,13 @@
 package de.calendar.controller;
 
 import de.calendar.model.Event;
-import de.calendar.model.InvitationToken;
+import de.calendar.model.Invitation;
 import de.calendar.model.User;
 import de.calendar.repositories.EventRepository;
+import de.calendar.repositories.InvitationRepository;
 import de.calendar.repositories.UserRepository;
 import de.calendar.utils.CalendarUtils;
+import de.calendar.utils.TokenGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,11 +33,15 @@ public class EventController {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private InvitationRepository invitationRepository;
+
     private java.util.function.Function<Event, JSONObject> mapper = event -> new JSONObject()
             .put("title", event.getTitle())
             .put("start", event.getStartString())
             .put("end", event.getEndString())
-            .put("id", event.getID());
+            .put("id", event.getId());
 
     @Autowired
     private Authorization authorization;
@@ -58,8 +64,8 @@ public class EventController {
                     end = endTMP;
                 }
 
-                Event event = new Event(data.getString("title"), start, end);
-                user.getOwnerships().add(event);
+                Event event = new Event(data.getString("title"), start, end, user);
+                user.getOwningevents().add(event);
                 eventRepository.save(event);
                 userRepository.save(user);
 
@@ -93,13 +99,13 @@ public class EventController {
                     until = untilTMP;
                 }
 
-                List<JSONObject> events = user.getMemberships()
+                List<JSONObject> events = user.getSubscriptions()
                         .stream()
                         .filter(event -> CalendarUtils.isEventBetween(event, from, until))
                         .map(mapper)
                         .collect(Collectors.toList());
 
-                events.addAll(user.getOwnerships()
+                events.addAll(user.getOwningevents()
                         .stream()
                         .filter(event -> CalendarUtils.isEventBetween(event, from, until))
                         .map(mapper)
@@ -107,7 +113,7 @@ public class EventController {
                 return new ResponseEntity<>(new JSONArray(events).toString(), HttpStatus.OK);
             } else if (id != null) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
-                if (!(user.getOwnerships().contains(event) || user.getMemberships().contains(event))) {
+                if (!(user.getOwningevents().contains(event) || user.getSubscriptions().contains(event))) {
                     return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
                 }
                 return new ResponseEntity<>(mapper.apply(event).toString(), HttpStatus.OK);
@@ -122,7 +128,7 @@ public class EventController {
         return authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
                 Event event = eventRepository.findOne(Long.valueOf(id));
-                if (!user.getOwnerships().contains(event)) {
+                if (!user.getOwningevents().contains(event)) {
                     return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
                 } else {
                     LocalDateTime startTMP = CalendarUtils.parse(data.has("start") ? data.getString("start") : null);
@@ -161,15 +167,15 @@ public class EventController {
     public ResponseEntity<String> deleteEvent(@RequestParam(name = "token") String token, @RequestParam("id") String id) {
         return authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
-            if (!user.getOwnerships().contains(event)) {
+            if (!user.getOwningevents().contains(event)) {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
             for (User benutzer : userRepository.findAll()) {
-                new HashSet<>(benutzer.getMemberships()).stream().filter(ownerEvent -> ownerEvent.getID().equals(event.getID())).forEach(ownerEvent -> {
-                    benutzer.getMemberships().remove(ownerEvent);
+                new HashSet<>(benutzer.getSubscriptions()).stream().filter(ownerEvent -> ownerEvent.getId().equals(event.getId())).forEach(ownerEvent -> {
+                    benutzer.getSubscriptions().remove(ownerEvent);
                 });
-                new HashSet<>(benutzer.getOwnerships()).stream().filter(ownerEvent -> ownerEvent.getID().equals(event.getID())).forEach(ownerEvent -> {
-                    benutzer.getOwnerships().remove(ownerEvent);
+                new HashSet<>(benutzer.getOwningevents()).stream().filter(ownerEvent -> ownerEvent.getId().equals(event.getId())).forEach(ownerEvent -> {
+                    benutzer.getOwningevents().remove(ownerEvent);
                 });
                 userRepository.save(user);
             }
@@ -187,11 +193,16 @@ public class EventController {
             }
 
             Event event = eventRepository.findOne(Long.valueOf(id));
-            if (user.getOwnerships().contains(event)) {
-                String link = event.createInvitationLink();
+            if (user.getOwningevents().contains(event)) {
+                String invitationToken = TokenGenerator.generateRandom(64);
+                while (invitationRepository.findOne(invitationToken) != null) {
+                    invitationToken = TokenGenerator.generateRandom(64);
+                }
+
+                event.getInvitations().add(new Invitation(invitationToken));
                 eventRepository.save(event);
 
-                return new ResponseEntity<>(new JSONObject().put("url", link).toString(), HttpStatus.OK);
+                return new ResponseEntity<>(new JSONObject().put("url", String.format("/event/invitation?invitationToken=%s&id=%s", invitationToken, id)).toString(), HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
@@ -202,14 +213,16 @@ public class EventController {
     public ResponseEntity<String> joinEvent(@RequestParam(name = "token") String token, @RequestParam(name = "invitationToken") String invitationToken, @RequestParam("id") String id) {
         return authorization.authorize(token, null, (user, data) -> {
             Event event = eventRepository.findOne(Long.valueOf(id));
-            try {
-                user.getMemberships().add(event);
-                event.join(new InvitationToken(invitationToken));
-                eventRepository.save(event);
-                userRepository.save(user);
-            } catch (IllegalArgumentException e) {
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+            Invitation invitation = new Invitation(invitationToken);
+            if (event.getInvitations().contains(invitation)) {
+                user.getSubscriptions().add(event);
+                event.getInvitations().remove(invitation);
+            } else {
+                return new ResponseEntity<>("Invalid or expired invitation token.", HttpStatus.FORBIDDEN);
             }
+
+            eventRepository.save(event);
+            userRepository.save(user);
             return new ResponseEntity<>("", HttpStatus.OK);
         });
     }

@@ -38,7 +38,7 @@ public class InviteSteps {
         if (lastID == null) {
             Event event = CalendarTestUtils.findOneEventByTitleAndDate(title, date + " 00:00", date + " 23:59", token);
             if(event != null){
-                lastID = event.getID();
+                lastID = event.getId();
             }
         }
         response = CalendarTestUtils.inviteToEvent(lastID, token);
