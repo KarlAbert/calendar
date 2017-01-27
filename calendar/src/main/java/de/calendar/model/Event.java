@@ -6,20 +6,12 @@ package de.calendar.model;
 
 import de.calendar.utils.CalendarUtils;
 
+import javax.persistence.*;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import javax.persistence.Basic;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.validation.constraints.Size;
 
 /**
  * Hier werden die Events gespeichert.
@@ -28,12 +20,6 @@ import javax.validation.constraints.Size;
 
 @Entity
 public class Event implements Serializable {
-
-    public static final DateTimeFormatter DATETIME_FORMAT = dateFormat("dd.MM.yyyy HH:mm");
-
-    private static DateTimeFormatter dateFormat(String s) {
-        return DateTimeFormatter.ofPattern(s).withLocale(Locale.GERMANY);
-    }
 
     @Deprecated
     public Event() {
@@ -103,10 +89,6 @@ public class Event implements Serializable {
         this.id = id;
     }
 
-    public String getStartString() {
-        return this.start;
-    }
-
     public LocalDateTime getStart()  {
         return CalendarUtils.parse(this.start);
     }
@@ -117,10 +99,6 @@ public class Event implements Serializable {
 
     public void setStart(LocalDateTime start) {
         this.start = CalendarUtils.format(start);
-    }
-
-    public String getEndString() {
-        return this.end;
     }
 
     public LocalDateTime getEnd() {

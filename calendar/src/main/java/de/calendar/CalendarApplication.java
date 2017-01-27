@@ -5,6 +5,8 @@ import de.calendar.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import javax.annotation.PostConstruct;
 
@@ -37,5 +39,11 @@ public class CalendarApplication {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static HttpHeaders setJSONContentType() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        return headers;
     }
 }

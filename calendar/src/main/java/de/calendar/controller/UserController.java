@@ -9,12 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static de.calendar.CalendarApplication.setJSONContentType;
+
 /**
  * Created LoginController in de.calendar.controller
  * by ARSTULKE on 19.01.2017.
  */
 @SuppressWarnings("unused")
 @RestController
+@CrossOrigin
 public class UserController {
     @Autowired
     private UserRepository userRepository;
@@ -42,6 +45,7 @@ public class UserController {
                                 .put("status", HttpStatus.CONFLICT.value())
                                 .put("reason", reason)
                                 .toString(),
+                        setJSONContentType(),
                         HttpStatus.CONFLICT
                 );
             }
@@ -53,6 +57,7 @@ public class UserController {
                                 .put("status", HttpStatus.FORBIDDEN.value())
                                 .put("reason", "Unknown credentials")
                                 .toString(),
+                        setJSONContentType(),
                         HttpStatus.FORBIDDEN
                 );
             } else {
@@ -66,6 +71,7 @@ public class UserController {
                                 .put("token", user.getToken().getValue())
                                 .put("expiring", user.getToken().getExpiringDate())
                                 .toString(),
+                        setJSONContentType(),
                         HttpStatus.OK
                 );
 
@@ -98,7 +104,9 @@ public class UserController {
                 .put("lastname", user.getLastname())
                 .put("token", user.getToken().getValue())
                 .put("expiring", user.getToken().getExpiringDate())
-                .toString(), HttpStatus.OK));
+                .toString(),
+                setJSONContentType(),
+                HttpStatus.OK));
     }
 
     public static boolean login(JSONObject data) {

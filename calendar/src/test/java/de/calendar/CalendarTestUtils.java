@@ -5,6 +5,8 @@ import de.calendar.model.User;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -47,8 +49,16 @@ public class CalendarTestUtils {
     public static Response createEvent(Event event, String token) {
         return TestUtils.post("/event", token, new JSONObject()
                 .put("title", event.getTitle())
-                .put("start", event.getStartString())
-                .put("end", event.getEndString()));
+                .put("start", event.getStart().toString())
+                .put("end", event.getEnd().toString()));
+    }
+
+    private static String format(LocalDateTime localDateTime) {
+        return DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").format(localDateTime);
+    }
+
+    public static LocalDateTime parse(String string) {
+        return LocalDateTime.parse(string, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
     }
 
     public static Event getEvent(Long id, String token) {
@@ -62,8 +72,8 @@ public class CalendarTestUtils {
     public static Response editEvent(Long id, Event event, String token) {
         return TestUtils.put("/event/" + id, token, new JSONObject()
                 .put("title", event.getTitle())
-                .put("start", event.getStartString())
-                .put("end", event.getEndString()));
+                .put("start", event.getStart())
+                .put("end", event.getEnd()));
     }
 
     public static Response inviteEvent(Long id, String token) {
@@ -74,10 +84,12 @@ public class CalendarTestUtils {
         return TestUtils.put("/event/" + id + "/user/" + invitationToken, token, null);
     }
 
-    public static Event findEvent(String title, String from, String until, String token) {
+    public static Event findEvent(String title, String fromString, String untilString, String token) {
+        LocalDateTime from = parse(fromString);
+        LocalDateTime until = parse(untilString);
         List<Event> all = findEvent(from, until, token)
                 .stream()
-                .filter(event -> event.getTitle().equals(title) && event.getStartString().equals(from) && event.getEndString().equals(until))
+                .filter(event -> event.getTitle().equals(title) && event.getStart().equals(from) && event.getEnd().equals(until))
                 .collect(Collectors.toList());
 
         if (all.size() > 1) {
@@ -89,7 +101,7 @@ public class CalendarTestUtils {
         }
     }
 
-    public static List<Event> findEvent(String from, String until, String token) {
+    public static List<Event> findEvent(LocalDateTime from, LocalDateTime until, String token) {
         JSONArray arr = TestUtils.get(String.format("/event?from=%s&until=%s", from, until), token).getJSONArray();
         List<JSONObject> list = new ArrayList<>();
         for (int i = 0; i < arr.length(); i++) {

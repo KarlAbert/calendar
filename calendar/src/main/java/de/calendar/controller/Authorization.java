@@ -1,5 +1,6 @@
 package de.calendar.controller;
 
+import de.calendar.CalendarApplication;
 import de.calendar.model.User;
 import de.calendar.repositories.UserRepository;
 import org.json.JSONObject;
@@ -16,9 +17,17 @@ class Authorization {
     ResponseEntity<String> authorize(String token, String dataString, Function function) {
         User user = userRepository.findOneByTokenValue(token);
         if (user == null || user.getToken().isExpired()) {
-            return new ResponseEntity<>("Invalid or expired token.", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(new JSONObject()
+                    .put("reason", "Invalid or expired token.")
+                    .toString(),
+                    CalendarApplication.setJSONContentType(),
+                    HttpStatus.UNAUTHORIZED);
         } else {
-            return function.doSomething(user, dataString == null ? null : new JSONObject(dataString));
+            ResponseEntity<String> response = function.doSomething(user, dataString == null ? null : new JSONObject(dataString));
+            if (response.hasBody() && (response.getBody().startsWith("{") || response.getBody().startsWith("["))) {
+                return new ResponseEntity<>(response.getBody(), CalendarApplication.setJSONContentType(), response.getStatusCode());
+            }
+            return response;
         }
     }
 

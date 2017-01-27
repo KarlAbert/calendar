@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static de.calendar.CalendarTestUtils.parse;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
@@ -35,7 +36,7 @@ public class CalendarEventsSteps {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         Event event = CalendarTestUtils.findEvent(title, dateString + " 00:00", dateString + " 23:59", token);
         if (event == null) {
-            Response response = CalendarTestUtils.createEvent(new Event(title, dateString + " 00:00", dateString + " 23:59"), token);
+            Response response = CalendarTestUtils.createEvent(new Event(title, parse(dateString + " 00:00"), parse(dateString + " 23:59")), token);
             lastID = response.getJSONObject().getLong("id");
         } else {
             lastID = event.getId();
@@ -49,7 +50,7 @@ public class CalendarEventsSteps {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         Event event = CalendarTestUtils.findEvent(title, dateString + " 00:00", dateString + " 23:59", token);
 
-        this.eventCount = CalendarTestUtils.findEvent(dateString + " 00:00", dateString + " 23:59", token).size();
+        this.eventCount = CalendarTestUtils.findEvent(parse(dateString + " 00:00"), parse(dateString + " 23:59"), token).size();
         this.saveResponse = CalendarTestUtils.deleteEvent(event.getId(), token);
     }
 
@@ -71,13 +72,13 @@ public class CalendarEventsSteps {
     @Wenn("^TestUser die Ereignisse zwischen dem \"([^\"]*)\" und dem \"([^\"]*)\" anzeigen lässt$")
     public void testuserDieEreignisseZwischenDemUndDemAnzeigenLässt(String from, String until) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        events = CalendarTestUtils.findEvent(from + " 00:00", until + " 23:59", token);
+        events = CalendarTestUtils.findEvent(parse(from + " 00:00"), parse(until + " 23:59"), token);
     }
 
     @Wenn("^TestUser ein ganztägiges Ereigniss am \"([^\"]*)\" mit dem Titel \"([^\"]*)\" erstellt$")
     public void testuserEinEreignissAmMitDemTitelErstellt(String dateString, String title) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        this.saveResponse = CalendarTestUtils.createEvent(new Event(title, dateString + " 00:00", dateString + " 23:59"), token);
+        this.saveResponse = CalendarTestUtils.createEvent(new Event(title, parse(dateString + " 00:00"), parse(dateString + " 23:59")), token);
     }
     //endregion
 
@@ -88,7 +89,7 @@ public class CalendarEventsSteps {
 
         assertThat(this.saveResponse.getStatus(), is(204));
 
-        List<Event> eventList = CalendarTestUtils.findEvent(dateString + " 00:00", dateString + " 23:59", token);
+        List<Event> eventList = CalendarTestUtils.findEvent(parse(dateString + " 00:00"), parse(dateString + " 23:59"), token);
 
         assertThat(eventList.size(), is(eventCount - 1));
     }
@@ -96,7 +97,7 @@ public class CalendarEventsSteps {
     @Dann("^werden TestUser folgende Ergebnisse zurückgegeben:$")
     public void werdenTestUserFolgendeErgebnisseZurückgegeben(Map<String, String> data) throws Throwable {
         data.entrySet().forEach(eventEntry -> {
-            Event event = new Event(eventEntry.getKey(), eventEntry.getValue() + " 00:00", eventEntry.getValue() + " 23:59");
+            Event event = new Event(eventEntry.getKey(), parse(eventEntry.getValue() + " 00:00"), parse(eventEntry.getValue() + " 23:59"));
             if (events.contains(event)) {
                 assertTrue(true);
             } else {
@@ -110,8 +111,8 @@ public class CalendarEventsSteps {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         assertThat(saveResponse.getStatus(), anyOf(is(201), is(200)));
 
-        List<Event> events = CalendarTestUtils.findEvent(dateString + " 00:00", dateString + " 23:59", token);
-        Event event = new Event(title, dateString + " 00:00", dateString + " 23:59");
+        List<Event> events = CalendarTestUtils.findEvent(parse(dateString + " 00:00"), parse(dateString + " 23:59"), token);
+        Event event = new Event(title, parse(dateString + " 00:00"), parse(dateString + " 23:59"));
         if (events.contains(event)) {
             assertTrue(true);
         } else {
@@ -129,7 +130,7 @@ public class CalendarEventsSteps {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         Event event = CalendarTestUtils.findEvent(title, startString, endString, token);
         if (event == null) {
-            CalendarTestUtils.createEvent(new Event(title, startString, endString), token);
+            CalendarTestUtils.createEvent(new Event(title, parse(startString), parse(endString)), token);
         }
     }
 
@@ -138,7 +139,7 @@ public class CalendarEventsSteps {
     @Wenn("^TestUser ein Ereigniss mit dem Titel \"([^\"]*)\" von \"([^\"]*)\"Uhr bis \"([^\"]*)\"Uhr erstellt$")
     public void testuserEinEreignissMitDemTitelVonUhrBisUhrErstellt(String title, String startString, String endString) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        this.saveResponse = CalendarTestUtils.createEvent(new Event(title, startString, endString), token);
+        this.saveResponse = CalendarTestUtils.createEvent(new Event(title, parse(startString), parse(endString)), token);
     }
 
     @Wenn("^TestUser das Ereignis \"([^\"]*)\" von \"([^\"]*)\"Uhr bis \"([^\"]*)\"Uhr zu \"([^\"]*)\" zwischen \"([^\"]*)\"Uhr und \"([^\"]*)\"Uhr ändert$")

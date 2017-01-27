@@ -8,6 +8,7 @@ import de.calendar.CalendarTestUtils;
 import de.calendar.Response;
 import de.calendar.model.Event;
 
+import static de.calendar.CalendarTestUtils.parse;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
@@ -26,7 +27,7 @@ public class InviteSteps {
 
     @Gegebensei("^das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalendar von \"([^\"]*)\"$")
     public void dasGanztägigeEreignisAmInDemKalendarVon(String title, String date, String executer) throws Throwable {
-        Response response = CalendarTestUtils.createEvent(new Event(title, date + " 00:00", date + " 23:59"), CalendarTestUtils.registerAndLogin(executer));
+        Response response = CalendarTestUtils.createEvent(new Event(title, parse(date + " 00:00"), parse(date + " 23:59")), CalendarTestUtils.registerAndLogin(executer));
         lastID = response.getJSONObject().getLong("id");
     }
 

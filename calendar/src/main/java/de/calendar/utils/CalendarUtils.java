@@ -3,6 +3,7 @@ package de.calendar.utils;
 import de.calendar.model.Event;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Created CalendarUtils in de.calendar.utils
@@ -29,12 +30,12 @@ public class CalendarUtils {
         if (localDateTime == null) {
             return null;
         }
-        return localDateTime.format(Event.DATETIME_FORMAT);
+        return localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     public static LocalDateTime parse(String string) {
         try {
-            return LocalDateTime.parse(string, Event.DATETIME_FORMAT);
+            return LocalDateTime.parse(string, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } catch (Exception e) {
             return null;
         }

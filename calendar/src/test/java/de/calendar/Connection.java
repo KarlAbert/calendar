@@ -37,10 +37,12 @@ public class Connection implements AutoCloseable {
 
     Connection writeRequestBody(JSONObject data) throws IOException {
         if (data != null) {
+            String dataString = data.toString();
+
             connection.setRequestProperty("Content-type", "application/json");
             connection.setDoOutput(true);
             try (DataOutputStream wr = new DataOutputStream(connection.getOutputStream())) {
-                wr.write(data.toString().getBytes());
+                wr.write(dataString.getBytes());
             }
         }
         return this;
@@ -69,6 +71,9 @@ public class Connection implements AutoCloseable {
     }
 
     private static URL formatURL(String stringURL) throws MalformedURLException {
+        if (stringURL.contains("null")) {
+            throw new IllegalArgumentException("'null' is not supported");
+        }
         if (!DOMAIN.endsWith("/") && !stringURL.startsWith("/")) {
             stringURL = "/" + stringURL;
         }
