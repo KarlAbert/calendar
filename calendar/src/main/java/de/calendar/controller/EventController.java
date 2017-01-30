@@ -225,10 +225,16 @@ public class EventController {
                     invitationToken = TokenGenerator.generateRandom(64);
                 }
 
-                event.getInvitations().add(new Invitation(invitationToken));
+                Invitation invitation = new Invitation(invitationToken);
+                event.getInvitations().add(invitation);
+                invitationRepository.save(invitation);
                 eventRepository.save(event);
 
-                return new ResponseEntity<>(new JSONObject().put("url", String.format("/event/%s/invitation/%s", id, invitationToken)).toString(), HttpStatus.OK);
+                return new ResponseEntity<>(new JSONObject()
+                        .put("url", String.format("/event/%s/invitation/%s", id, invitationToken))
+                        .put("invitationToken", invitationToken)
+                        .toString(),
+                        HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
             }
