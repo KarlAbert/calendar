@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'/>
+    <title>Calendar</title>
+    <script src='./lib/jquery.min.js'></script>
+    <script src='./lib/moment.min.js'></script>
+    <script src='./assets/fullcalendar.min.js'></script>
+    <script src='./locale/de.js'></script>
+    <link href='./assets/fullcalendar.min.css' rel='stylesheet'/>
+    <link href='./assets/fullcalendar.print.min.css' rel='stylesheet' media='print'/>
+
+    <script>
+        $(document).ready(function() {
+            $('#calendar').fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay,listWeek'
+                },
+                locale: "de",
+                timeFormat: "HH:mm",
+                editable: true,
+                eventLimit: true,
+                events: loadData(),
+                eventResize: function(event, delta, revertFunc) {
+                    editEvent(event.id, event, revertFunc);
+                },
+                eventDrop: function(event, delta, revertFunc) {
+                    editEvent(event.id, event, revertFunc);
+                },			
+				eventClick: function(event, element) {
+					title = prompt("Neuer Name:", event.title);
+				
+					if(title !== null) {
+						event.title = title;
+						editEvent(event.id, event, null, function() {
+							$('#calendar').fullCalendar('updateEvent', event);
+						});
+					}
+				},			
+				
+				
+				dayClick: function(date, jsEvent, view) {
+					alert("Not implemented yet!");
+				}
+            });
+
+            function editEvent(id, event, revertFunc, successFunc) {
+                var start = event.start,
+                    end = event.end,
+                    title = event.title;
+                if (end === null) {
+                    end = start;
+                }
+
+                $.ajax({
+                    type: "PUT",
+                    url: "http://localhost:8080/event/" + id + "",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("Authorization", login());
+                    },
+                    data: JSON.stringify({
+                        start: start.toJSON(),
+                        end: end.toJSON(),
+                        title: title
+                    }),
+                    contentType: "application/json",
+                    error: function() {
+						if(revertFunc !== null && revertFunc !== undefined) {
+							revertFunc();
+						}
+					},
+					success: function(response) {
+						if(successFunc !== null && successFunc !== undefined) {
+							successFunc(response);
+						}
+					}
+                });
+            }
+
+            function loadData() {
+                return $.ajax({
+                    type: "GET",
+                    url: "http://localhost:8080/event",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("Authorization", login());
+                    },
+                    async: false,
+                    error: function(xhr, status, error) {
+                        if (xhr.status == 401) {
+                            forceLogin();
+                        }
+                    }
+                }).responseJSON;
+            }
+
+            function login() {
+                function getToken() {
+                    var name = "token=";
+                    var decodedCookie = decodeURIComponent(document.cookie);
+                    var ca = decodedCookie.split(';');
+                    for(var i = 0; i <ca.length; i++) {
+                        var c = ca[i];
+                        while (c.charAt(0) == ' ') {
+                            c = c.substring(1);
+                        }
+                        if (c.indexOf(name) == 0) {
+                            return c.substring(name.length, c.length);
+                        }
+                    }
+                    return "";
+                }
+
+                if (getToken()  === null) {
+                    forceLogin();
+                }
+
+                return getToken();
+            }
+
+            function forceLogin() {
+                var username = prompt("username:");
+				if(username == null) {
+					forceLogin();
+				}
+                var password = prompt("password:");
+				if(password == null) {
+					forceLogin();
+				}
+
+				
+                var response = $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8080/user",
+                    error: forceLogin,
+                    data: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    contentType: "application/json",
+                    async: false
+                }).responseJSON;
+                if (response.token !== undefined & response.expiring !== undefined) {
+					document.cookie = "token=" + response.token + ";expires=" + new Date(response.expiring).toUTCString() + ";path=/";
+                }
+            }
+        });
+
+    </script>
+    <style>
+        body {
+            margin: 40px 10px;
+            padding: 0;
+            font-family: "Lucida Grande", Helvetica, Arial, Verdana, sans-serif;
+            font-size: 14px;
+        }
+        
+        #calendar {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div id='calendar'></div>
+
+</body>
+
+</html>

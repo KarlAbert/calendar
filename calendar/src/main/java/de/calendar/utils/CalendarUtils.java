@@ -40,4 +40,35 @@ public class CalendarUtils {
             return null;
         }
     }
+
+    public static LocalDateTime[] formatStartAndEnd(String startString, String endString) {
+        if (startString != null && !startString.contains("T")) {
+            startString += "T00:00:00";
+        }
+        if (endString != null && !endString.contains("T")) {
+            endString += "T23:59:59";
+        }
+
+        LocalDateTime startTMP = parse(startString);
+        LocalDateTime endTMP = parse(endString);
+        LocalDateTime start, end;
+        if (startTMP == null && endTMP != null) {
+            start = endTMP.minusHours(1L);
+            end = endTMP;
+        } else if (startTMP != null && endTMP == null) {
+            start = startTMP;
+            end = startTMP.plusHours(1L);
+        } else {
+            //noinspection ConstantConditions
+            if (startTMP.isAfter(endTMP)) {
+                start = endTMP;
+                end = startTMP;
+            } else {
+                start = startTMP;
+                end = endTMP;
+            }
+        }
+
+        return new LocalDateTime[]{start, end};
+    }
 }

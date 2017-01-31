@@ -6,10 +6,10 @@ Funktionalität: Kalendarereignisse mit Zeitangabe
     Dann steht das Ereignis "<titel>" von "<von_ergebnis>"Uhr bis "<bis_ergebnis>"Uhr in dem Kalender von TestUser
 
     Beispiele:
-      | titel            | von              | bis              | von_ergebnis     | bis_ergebnis     |
-      | Karls Geburtstag | 21.01.2017 20:15 | 21.01.2017 23:45 | 21.01.2017 20:15 | 21.01.2017 23:45 |
-      | Karls Geburtstag | 21.01.2017 20:15 |                  | 21.01.2017 20:15 | 21.01.2017 21:15 |
-      | Karls Geburtstag |                  | 21.01.2017 23:45 | 21.01.2017 22:45 | 21.01.2017 23:45 |
+      | titel            | von                 | bis                 | von_ergebnis        | bis_ergebnis        |
+      | Karls Geburtstag | 21.01.2017 20:15:00 | 21.01.2017 23:45:00 | 21.01.2017 20:15:00 | 21.01.2017 23:45:00 |
+      | Karls Geburtstag | 21.01.2017 20:15:00 |                     | 21.01.2017 20:15:00 | 21.01.2017 21:15:00 |
+      | Karls Geburtstag |                     | 21.01.2017 23:45:00 | 21.01.2017 22:45:00 | 21.01.2017 23:45:00 |
 
   Szenariogrundriss: Ereignis mit Zeitangabe bearbeiten
     Gegeben sei das Ereignis "<titel>"  von "<von>"Uhr bis "<bis>"Uhr in dem Kalendar von TestUser
@@ -17,7 +17,7 @@ Funktionalität: Kalendarereignisse mit Zeitangabe
     Dann steht das Ereignis "<neuer_titel>" von "<von_ergebnis>"Uhr bis "<bis_ergebnis>"Uhr in dem Kalender von TestUser
 
     Beispiele:
-      | titel            | von              | bis              | neuer_titel       | neu_von          | neu_bis          | von_ergebnis     | bis_ergebnis     |
-      | Karls Geburtstag | 21.01.2016 20:15 | 21.01.2016 23:45 | Marens Geburtstag | 23.10.2017 15:00 | 23.10.2017 18:00 | 23.10.2017 15:00 | 23.10.2017 18:00 |
-      | Karls Geburtstag | 21.01.2016 20:15 | 21.01.2016 23:45 | Marens Geburtstag | 23.10.2017 15:00 |                  | 23.10.2017 15:00 | 23.10.2017 16:00 |
-      | Karls Geburtstag | 21.01.2016 20:15 | 21.01.2016 23:45 | Marens Geburtstag |                  | 23.10.2017 18:00 | 23.10.2017 17:00 | 23.10.2017 18:00 |
+      | titel            | von                 | bis                 | neuer_titel       | neu_von             | neu_bis             | von_ergebnis        | bis_ergebnis        |
+      | Karls Geburtstag | 21.01.2016 20:15:00 | 21.01.2016 23:45:00 | Marens Geburtstag | 23.10.2017 15:00:00 | 23.10.2017 18:00:00 | 23.10.2017 15:00:00 | 23.10.2017 18:00:00 |
+      | Karls Geburtstag | 21.01.2016 20:15:00 | 21.01.2016 23:45:00 | Marens Geburtstag | 23.10.2017 15:00:00 |                     | 23.10.2017 15:00:00 | 23.10.2017 16:00:00 |
+      | Karls Geburtstag | 21.01.2016 20:15:00 | 21.01.2016 23:45:00 | Marens Geburtstag |                     | 23.10.2017 18:00:00 | 23.10.2017 17:00:00 | 23.10.2017 18:00:00 |

@@ -33,9 +33,9 @@ public class CalendarEventsSteps {
     @Gegebensei("^das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalendar von TestUser$")
     public void dasEreignisAmInDemKalendarVonTestUser(String title, String dateString) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        Event event = CalendarTestUtils.findEvent(title, dateString + " 00:00", dateString + " 23:59", token);
+        Event event = CalendarTestUtils.findEvent(title, dateString + " 00:00:00", dateString + " 23:59:59", token);
         if (event == null) {
-            Response response = CalendarTestUtils.createEvent(new Event(title, parse(dateString + " 00:00"), parse(dateString + " 23:59")), token);
+            Response response = CalendarTestUtils.createEvent(new Event(title, parse(dateString + " 00:00:00"), parse(dateString + " 23:59:59")), token);
             lastID = response.getJSONObject().getLong("id");
         } else {
             lastID = event.getId();
@@ -47,9 +47,9 @@ public class CalendarEventsSteps {
     @Wenn("^TestUser das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" löscht$")
     public void testuserDasEreignisAmLöscht(String title, String dateString) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        Event event = CalendarTestUtils.findEvent(title, dateString + " 00:00", dateString + " 23:59", token);
+        Event event = CalendarTestUtils.findEvent(title, dateString + " 00:00:00", dateString + " 23:59:59", token);
 
-        this.eventCount = CalendarTestUtils.findEvent(parse(dateString + " 00:00"), parse(dateString + " 23:59"), token).size();
+        this.eventCount = CalendarTestUtils.findEvent(parse(dateString + " 00:00:00"), parse(dateString + " 23:59:59"), token).size();
         this.saveResponse = CalendarTestUtils.deleteEvent(event.getId(), token);
     }
 
@@ -57,13 +57,13 @@ public class CalendarEventsSteps {
     public void testuserDasEreignisAmZuAmÄndert(String title1, String dateString1, String title2, String dateString2) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
 
-        Event event = CalendarTestUtils.findEvent(title1, dateString1 + " 00:00", dateString1 + " 23:59", token);
+        Event event = CalendarTestUtils.findEvent(title1, dateString1 + " 00:00:00", dateString1 + " 23:59:59", token);
         if (event == null) {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         }
         event.setTitle(title2);
-        event.setStart(parse(dateString2 + " 00:00"));
-        event.setEnd(parse(dateString2 + " 23:59"));
+        event.setStart(parse(dateString2 + " 00:00:00"));
+        event.setEnd(parse(dateString2 + " 23:59:59"));
 
         this.saveResponse = CalendarTestUtils.editEvent(event.getId(), event, token);
     }
@@ -71,13 +71,13 @@ public class CalendarEventsSteps {
     @Wenn("^TestUser die Ereignisse zwischen dem \"([^\"]*)\" und dem \"([^\"]*)\" anzeigen lässt$")
     public void testuserDieEreignisseZwischenDemUndDemAnzeigenLässt(String from, String until) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        events = CalendarTestUtils.findEvent(parse(from + " 00:00"), parse(until + " 23:59"), token);
+        events = CalendarTestUtils.findEvent(parse(from + " 00:00:00"), parse(until + " 23:59:59"), token);
     }
 
     @Wenn("^TestUser ein ganztägiges Ereigniss am \"([^\"]*)\" mit dem Titel \"([^\"]*)\" erstellt$")
     public void testuserEinEreignissAmMitDemTitelErstellt(String dateString, String title) throws Throwable {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
-        this.saveResponse = CalendarTestUtils.createEvent(new Event(title, parse(dateString + " 00:00"), parse(dateString + " 23:59")), token);
+        this.saveResponse = CalendarTestUtils.createEvent(new Event(title, parse(dateString + " 00:00:00"), parse(dateString + " 23:59:59")), token);
     }
     //endregion
 
@@ -88,7 +88,7 @@ public class CalendarEventsSteps {
 
         assertThat(this.saveResponse.getStatus(), is(204));
 
-        List<Event> eventList = CalendarTestUtils.findEvent(parse(dateString + " 00:00"), parse(dateString + " 23:59"), token);
+        List<Event> eventList = CalendarTestUtils.findEvent(parse(dateString + " 00:00:00"), parse(dateString + " 23:59:59"), token);
 
         assertThat(eventList.size(), is(eventCount - 1));
     }
@@ -96,7 +96,7 @@ public class CalendarEventsSteps {
     @Dann("^werden TestUser folgende Ergebnisse zurückgegeben:$")
     public void werdenTestUserFolgendeErgebnisseZurückgegeben(Map<String, String> data) throws Throwable {
         data.entrySet().forEach(eventEntry -> {
-            Event event = new Event(eventEntry.getKey(), parse(eventEntry.getValue() + " 00:00"), parse(eventEntry.getValue() + " 23:59"));
+            Event event = new Event(eventEntry.getKey(), parse(eventEntry.getValue() + " 00:00:00"), parse(eventEntry.getValue() + " 23:59:59"));
             if (events.contains(event)) {
                 assertTrue(true);
             } else {
@@ -110,12 +110,12 @@ public class CalendarEventsSteps {
         token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         assertThat(saveResponse.getStatus(), anyOf(is(201), is(200)));
 
-        List<Event> events = CalendarTestUtils.findEvent(parse(dateString + " 00:00"), parse(dateString + " 23:59"), token);
-        Event event = new Event(title, parse(dateString + " 00:00"), parse(dateString + " 23:59"));
+        List<Event> events = CalendarTestUtils.findEvent(parse(dateString + " 00:00:00"), parse(dateString + " 23:59:59"), token);
+        Event event = new Event(title, parse(dateString + " 00:00:00"), parse(dateString + " 23:59:59"));
         if (events.contains(event)) {
             assertTrue(true);
         } else {
-            fail(String.format("Kalenderereignis:{%s, %s} konnte nicht gefnunden werden.", title, dateString));
+            fail(String.format("Kalenderereignis:{%s, %s} konnte nicht gefunden werden.", title, dateString));
         }
     }
 

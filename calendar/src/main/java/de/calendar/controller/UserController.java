@@ -3,6 +3,7 @@ package de.calendar.controller;
 import de.calendar.model.User;
 import de.calendar.repositories.UserRepository;
 import de.calendar.utils.TokenGenerator;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,12 @@ public class UserController {
 
     @PostMapping("/user")
     public ResponseEntity<String> loginOrRegister(@RequestBody String dataString) {
-        JSONObject data = new JSONObject(dataString);
+        JSONObject data = null;
+        try {
+            data = new JSONObject(dataString);
+        } catch (JSONException ignored) {
+        }
+
         if (register(data)) {
             User user = new User(data);
             User savedInstance1 = userRepository.findOneByUsername(user.getUsername());
@@ -110,11 +116,17 @@ public class UserController {
     }
 
     public static boolean login(JSONObject data) {
-        return data.has("username") && data.has("password");
+        return data != null &&
+                data.has("username") &&
+                data.has("password") &&
+                data.get("username") instanceof String &&
+                data.get("password") instanceof String;
     }
 
 
     public static boolean register(JSONObject data) {
+        if (data == null) return false;
+
         if (!data.has("firstname")) return false;
         if (!data.has("lastname")) return false;
         if (!data.has("username")) return false;

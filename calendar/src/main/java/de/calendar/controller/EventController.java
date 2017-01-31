@@ -43,8 +43,8 @@ public class EventController {
 
     private java.util.function.Function<Event, JSONObject> mapper = event -> new JSONObject()
             .put("title", event.getTitle())
-            .put("start", event.getStart().toString())
-            .put("end", event.getEnd().toString())
+            .put("start", event.getStartString())
+            .put("end", event.getEndString())
             .put("id", event.getId());
 
     @Autowired
@@ -54,27 +54,12 @@ public class EventController {
     public ResponseEntity<String> createEvent(@RequestHeader(name = "Authorization") String token, @RequestBody String dataString) {
         return authorization.authorize(token, dataString, (user, data) -> {
             if (valid(data)) {
-                LocalDateTime startTMP = parse(data.has("start") ? data.getString("start") : null);
-                LocalDateTime endTMP = parse(data.has("end") ? data.getString("end") : null);
-                LocalDateTime start, end;
-                if (startTMP == null && endTMP != null) {
-                    start = endTMP.minusHours(1L);
-                    end = endTMP;
-                } else if (startTMP != null && endTMP == null) {
-                    start = startTMP;
-                    end = startTMP.plusHours(1L);
-                } else {
-                    //noinspection ConstantConditions
-                    if (startTMP.isAfter(endTMP)) {
-                        start = endTMP;
-                        end = startTMP;
-                    } else {
-                        start = startTMP;
-                        end = endTMP;
-                    }
-                }
+                String startString = data.has("start") ? data.getString("start") : null;
+                String endString = data.has("end") ? data.getString("end") : null;
 
-                Event event = new Event(data.getString("title"), start, end, user);
+                LocalDateTime[] startAndEnd = CalendarUtils.formatStartAndEnd(startString, endString);
+
+                Event event = new Event(data.getString("title"), startAndEnd[0], startAndEnd[1], user);
                 user.getOwningevents().add(event);
                 eventRepository.save(event);
                 userRepository.save(user);
@@ -152,29 +137,13 @@ public class EventController {
                 if (!user.getOwningevents().contains(event)) {
                     return new ResponseEntity<>("You aren't the owner of this event.", HttpStatus.FORBIDDEN);
                 } else {
-                    LocalDateTime startTMP = parse(data.has("start") ? data.getString("start") : null);
-                    LocalDateTime endTMP = parse(data.has("end") ? data.getString("end") : null);
-                    LocalDateTime start, end;
-                    if (startTMP == null && endTMP != null) {
-                        start = endTMP.minusHours(1L);
-                        end = endTMP;
-                    } else if (startTMP != null && endTMP == null) {
-                        start = startTMP;
-                        end = startTMP.plusHours(1L);
-                    } else {
-                        //noinspection ConstantConditions
-                        if (startTMP.isAfter(endTMP)) {
-                            start = endTMP;
-                            end = startTMP;
-                        } else {
-                            start = startTMP;
-                            end = endTMP;
-                        }
-                    }
+                    String startString = data.has("start") ? data.getString("start") : null;
+                    String endString = data.has("end") ? data.getString("end") : null;
+                    LocalDateTime[] startAndEnd = CalendarUtils.formatStartAndEnd(startString, endString);
 
                     event.setTitle(data.getString("title"));
-                    event.setStart(start);
-                    event.setEnd(end);
+                    event.setStart(startAndEnd[0]);
+                    event.setEnd(startAndEnd[1]);
 
                     eventRepository.save(event);
 
@@ -298,9 +267,15 @@ public class EventController {
         if (!data.has("title")) return false;
         if (!(data.has("start") || data.has("end"))) return false;
 
-        if (parse(data.has("start") ? data.getString("start") : null) == null
-                && parse(data.has("end") ? data.getString("end") : null) == null)
-            return false;
+        String startString = data.has("start") ? data.getString("start") : null;
+        String endString = data.has("end") ? data.getString("end") : null;
+
+        LocalDateTime start = parse(startString);
+        LocalDateTime end = parse(endString);
+        start = ((start == null) ? parse(startString + "T00:00:00") : start);
+        end = ((end == null) ? parse(endString + "T23:59:59") : end);
+
+        if (start == null && end == null) return false;
 
         return true;
     }

@@ -19,35 +19,35 @@ public class EventControllerTest {
     public void validatesdataPost() {
         assertThat(valid(new JSONObject()
                 .put("title", "Test1")
-                .put("start", "21.01.2017 00:00")
-                .put("end", "21.01.2017 00:30")
+                .put("start", "2017-01-21T00:00")
+                .put("end", "2017-01-21T00:30")
         ), is(true));
 
         assertThat(valid(new JSONObject()
                 .put("title", "Test1")
                 .put("start", "")
-                .put("end", "21.01.2017 00:30")
+                .put("end", "2017-01-21T00:30")
         ), is(true));
 
         assertThat(valid(new JSONObject()
                 .put("title", "Test1")
-                .put("start", "21.01.2017 00:00")
+                .put("start", "2017-01-21T00:00")
                 .put("end", "")
         ), is(true));
 
         assertThat(valid(new JSONObject()
                 .put("title", "Test1")
-                .put("start", "21.01.2017 00:30")
+                .put("start", "2017-01-21T00:30")
         ), is(true));
 
         assertThat(valid(new JSONObject()
                 .put("title", "Test1")
-                .put("end", "21.01.2017 00:00")
+                .put("end", "2017-01-21T00:00")
         ), is(true));
 
         assertThat(valid(new JSONObject()
-                .put("start", "21.01.2017 00:00")
-                .put("end", "21.01.2017 00:30")
+                .put("start", "2017-01-21T00:00")
+                .put("end", "2017-01-21T00:30")
         ), is(false));
 
         assertThat(valid(new JSONObject()

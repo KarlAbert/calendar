@@ -27,7 +27,7 @@ public class InviteSteps {
 
     @Gegebensei("^das ganztägige Ereignis \"([^\"]*)\" am \"([^\"]*)\" in dem Kalendar von \"([^\"]*)\"$")
     public void dasGanztägigeEreignisAmInDemKalendarVon(String title, String date, String executer) throws Throwable {
-        Response response = CalendarTestUtils.createEvent(new Event(title, parse(date + " 00:00"), parse(date + " 23:59")), CalendarTestUtils.registerAndLogin(executer));
+        Response response = CalendarTestUtils.createEvent(new Event(title, parse(date + " 00:00:00"), parse(date + " 23:59:59")), CalendarTestUtils.registerAndLogin(executer));
         lastID = response.getJSONObject().getLong("id");
     }
 
@@ -35,7 +35,7 @@ public class InviteSteps {
     public void testuserDenEinladelinkVomEreignisAmGeneriert(String title, String date) throws Throwable {
         String token = CalendarTestUtils.login(CalendarTestUtils.testUsername, CalendarTestUtils.testUserPassword).getJSONObject().getString("token");
         if (lastID == null) {
-            Event event = CalendarTestUtils.findEvent(title, date + " 00:00", date + " 23:59", token);
+            Event event = CalendarTestUtils.findEvent(title, date + " 00:00:00", date + " 23:59:59", token);
             if(event != null){
                 lastID = event.getId();
             }
@@ -58,7 +58,7 @@ public class InviteSteps {
 
     @Dann("^nimmt \"([^\"]*)\" an dem Ereignis \"([^\"]*)\" am \"([^\"]*)\" von TestUser teil$")
     public void nimmtAnDemEreignisAmVonTestUserTeil(String executer, String title, String date) throws Throwable {
-        CalendarTestUtils.findEvent(title, date + " 00:00", date + " 23:59", CalendarTestUtils.login(executer, "passwort").getJSONObject().getString("token"));
+        CalendarTestUtils.findEvent(title, date + " 00:00:00", date + " 23:59:59", CalendarTestUtils.login(executer, "passwort").getJSONObject().getString("token"));
     }
 
     @Dann("^wird die Anfrage abgelehnt$")

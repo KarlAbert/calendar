@@ -2,6 +2,7 @@ package de.calendar;
 
 import de.calendar.model.Event;
 import de.calendar.model.User;
+import de.calendar.utils.CalendarUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -21,11 +22,20 @@ public class CalendarTestUtils {
 
     public static String testUsername = "TestUser1";
     public static String testUserPassword = "Password1";
+
     private static Function<? super JSONObject, Event> eventMapping = jsonObject -> {
+        String startString = jsonObject.getString("start");
+        LocalDateTime start = CalendarUtils.parse(startString);
+        start = start == null ? CalendarUtils.parse(startString + "T00:00:00") : start;
+
+        String endString = jsonObject.getString("end");
+        LocalDateTime end = CalendarUtils.parse(endString);
+        end = end == null ? CalendarUtils.parse(endString + "T23:59:59") : end;
+
         Event event = new Event(
                 jsonObject.getString("title"),
-                jsonObject.getString("start"),
-                jsonObject.getString("end"));
+                start,
+                end);
         event.setId(jsonObject.getLong("id"));
         return event;
     };
@@ -48,7 +58,7 @@ public class CalendarTestUtils {
 
     public static LocalDateTime parse(String string) {
         try {
-            return LocalDateTime.parse(string, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+            return LocalDateTime.parse(string, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"));
         } catch (Exception e) {
             return null;
         }
