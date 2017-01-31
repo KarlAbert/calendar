@@ -26,7 +26,7 @@ public class CalendarTestUtils {
                 jsonObject.getString("title"),
                 jsonObject.getString("start"),
                 jsonObject.getString("end"));
-                event.setId(jsonObject.getLong("id"));
+        event.setId(jsonObject.getLong("id"));
         return event;
     };
 
@@ -46,19 +46,26 @@ public class CalendarTestUtils {
 
     }
 
-    public static Response createEvent(Event event, String token) {
-        return TestUtils.post("/event", token, new JSONObject()
-                .put("title", event.getTitle())
-                .put("start", event.getStart().toString())
-                .put("end", event.getEnd().toString()));
-    }
-
-    private static String format(LocalDateTime localDateTime) {
-        return DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").format(localDateTime);
-    }
-
     public static LocalDateTime parse(String string) {
-        return LocalDateTime.parse(string, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+        try {
+            return LocalDateTime.parse(string, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static Response createEvent(Event event, String token) {
+        JSONObject json = new JSONObject()
+                .put("title", event.getTitle());
+
+        if (event.getStart() != null) {
+            json.put("start", event.getStart().toString());
+        }
+        if (event.getEnd() != null) {
+            json.put("end", event.getEnd().toString());
+        }
+
+        return TestUtils.post("/event", token, json);
     }
 
     public static Event getEvent(Long id, String token) {
@@ -70,10 +77,16 @@ public class CalendarTestUtils {
     }
 
     public static Response editEvent(Long id, Event event, String token) {
-        return TestUtils.put("/event/" + id, token, new JSONObject()
-                .put("title", event.getTitle())
-                .put("start", event.getStart())
-                .put("end", event.getEnd()));
+        JSONObject json = new JSONObject()
+                .put("title", event.getTitle());
+
+        if (event.getStart() != null) {
+            json.put("start", event.getStart().toString());
+        }
+        if (event.getEnd() != null) {
+            json.put("end", event.getEnd().toString());
+        }
+        return TestUtils.put("/event/" + id, token, json);
     }
 
     public static Response inviteEvent(Long id, String token) {

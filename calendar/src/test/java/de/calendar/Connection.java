@@ -71,9 +71,6 @@ public class Connection implements AutoCloseable {
     }
 
     private static URL formatURL(String stringURL) throws MalformedURLException {
-        if (stringURL.contains("null")) {
-            throw new IllegalArgumentException("'null' is not supported");
-        }
         if (!DOMAIN.endsWith("/") && !stringURL.startsWith("/")) {
             stringURL = "/" + stringURL;
         }

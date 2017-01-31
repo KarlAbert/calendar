@@ -6,7 +6,6 @@ import cucumber.api.java.de.Wenn;
 import de.calendar.CalendarTestUtils;
 import de.calendar.Response;
 import de.calendar.model.Event;
-import de.calendar.utils.CalendarUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +62,8 @@ public class CalendarEventsSteps {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         }
         event.setTitle(title2);
-        event.setStart(dateString2 + " 00:00");
-        event.setEnd(dateString2 + " 23:59");
+        event.setStart(parse(dateString2 + " 00:00"));
+        event.setEnd(parse(dateString2 + " 23:59"));
 
         this.saveResponse = CalendarTestUtils.editEvent(event.getId(), event, token);
     }
@@ -150,8 +149,8 @@ public class CalendarEventsSteps {
             fail("Kalendarereigniss konnte nicht gefunden werden.");
         } else {
             event.setTitle(title2);
-            event.setStart(startString2);
-            event.setEnd(endString2);
+            event.setStart(parse(startString2));
+            event.setEnd(parse(endString2));
             this.saveResponse = CalendarTestUtils.editEvent(event.getId(), event, token);
         }
     }
@@ -169,8 +168,8 @@ public class CalendarEventsSteps {
             fail("Kalendarereignis konnte nicht gefunen werden.");
         } else {
             assertThat(event.getTitle(), is(title));
-            assertThat(event.getStart(), is(CalendarUtils.parse(startString)));
-            assertThat(event.getEnd(), is(CalendarUtils.parse(endString)));
+            assertThat(event.getStart(), is(parse(startString)));
+            assertThat(event.getEnd(), is(parse(endString)));
         }
     }
 
