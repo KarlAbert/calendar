@@ -22,9 +22,9 @@ public class CalendarUtilsTest {
     @Test
     public void isEventBetween() {
         //given
-        Event event = new Event("Test", parse("21.01.2017 12:00"), parse("21.01.2017 15:00"));
-        LocalDateTime from = parse("21.01.2017 10:00");
-        LocalDateTime until = parse("21.01.2017 12:00");
+        Event event = new Event("Test", parse("21.01.2017 12:00:00"), parse("21.01.2017 15:00:00"));
+        LocalDateTime from = parse("21.01.2017 10:00:00");
+        LocalDateTime until = parse("21.01.2017 12:00:00");
 
         //when
         boolean between = CalendarUtils.isEventBetween(event, from, until);

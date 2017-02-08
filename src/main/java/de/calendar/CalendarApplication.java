@@ -5,19 +5,24 @@ import de.calendar.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import javax.annotation.PostConstruct;
 
 @SpringBootApplication
-public class CalendarApplication {
-
-    public CalendarApplication() {
-    }
+public class CalendarApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         SpringApplication.run(CalendarApplication.class, args);
+    }
+
+
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+        return builder.sources(CalendarApplication.class);
     }
 
     @Autowired

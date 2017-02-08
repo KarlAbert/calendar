@@ -57,7 +57,7 @@
 
                 $.ajax({
                     type: "PUT",
-                    url: "http://localhost:8080/event/" + id + "",
+                    url: "./event/" + id + "",
                     beforeSend: function(xhr) {
                         xhr.setRequestHeader("Authorization", login());
                     },
@@ -83,7 +83,7 @@
             function loadData() {
                 return $.ajax({
                     type: "GET",
-                    url: "http://localhost:8080/event",
+                    url: "./event",
                     beforeSend: function(xhr) {
                         xhr.setRequestHeader("Authorization", login());
                     },
@@ -133,7 +133,7 @@
 				
                 var response = $.ajax({
                     type: "POST",
-                    url: "http://localhost:8080/user",
+                    url: "./user",
                     error: forceLogin,
                     data: JSON.stringify({
                         username: username,
