@@ -12,12 +12,19 @@ import java.net.URL;
  * by ARSTULKE on 26.01.2017.
  */
 public class Connection implements AutoCloseable {
-    private static final String DOMAIN = "http://localhost:8080";
+    private static final String DOMAIN = "http://localhost:8080/";
+
+    private static boolean setProxy = false;
 
     private boolean readable = false;
     private HttpURLConnection connection;
 
     private Connection(URL url, Method method) throws IOException {
+        if(!setProxy) {
+            ProxyFactory.buildHttpProxy(System.getProperty("user.home") + "\\Desktop\\Projects\\proxy.config");
+            setProxy = true;
+        }
+
         this.connection = (HttpURLConnection) url.openConnection();
         this.connection.setRequestMethod(method.name());
         readable = true;
