@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div id="edit_form" class="modal" style="display: block">  
+  <div class="modal-content animate">
+    <div class="container">
+      <label><b>Name</b></label>
+	  <input type="text" name="title" placeholder="z.B. Geburtstag, Party..." required>
+      <label><b>Beginn</b></label>
+	  <input type="datetime-local" name="start" required>
+      <label><b>Ende</b></label>
+	  <input type="datetime-local" name="end" required>
+      <button type="submit">Speichern</button>
+    </div>
+	<div class="container" style="background-color:#f1f1f1">
+      <button type="button" onclick="document.getElementById('edit_form').style.display='none'" class="cancelbtn">Abbrechen</button>
+    </div>
+  </div>
+</div>
+<script>
+// Get the modal
+var modal = document.getElementById('edit_form');
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+modal.style.display = "block";
+</script>
+</body>
+</html>
