@@ -21,6 +21,7 @@ import static de.calendar.utils.CalendarUtils.parse;
  */
 
 @Entity
+@Table(name = "c_event")
 public class Event implements Serializable {
 
     @Deprecated
@@ -54,13 +55,13 @@ public class Event implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Basic
+    @Column(name = "c_start")
     private String start;
 
-    @Basic
+    @Column(name = "c_end")
     private String end;
 
-    @Basic
+    @Column(name = "c_title")
     @Size(min = 3, max = 56)
     private String title;
 

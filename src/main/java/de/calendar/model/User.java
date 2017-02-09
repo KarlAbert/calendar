@@ -19,30 +19,29 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "c_user")
 public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Basic
+    @Column(name = "c_firstname")
     @Size(min = 3, max = 25)
     private String firstname;
 
-    @Basic
+    @Column(name = "c_lastname")
     @Size(min = 3, max = 25)
     private String lastname;
 
-    @Column(unique = true)
-    @Basic
+    @Column(unique = true, name = "c_username")
     @Size(min = 3, max = 25)
     private String username;
 
-    @Column(unique = true)
-    @Basic
+    @Column(unique = true, name = "c_email")
     private String email;
 
-    @Basic
+    @Column(name = "c_password")
     @Size(min = 8)
     private String password;
 

@@ -5,3 +5,5 @@ target/
 *.iws
 *.iml
 *.ipr
+
+**/prod.application.properties

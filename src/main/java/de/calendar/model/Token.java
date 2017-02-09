@@ -6,7 +6,6 @@ package de.calendar.model;
 
 import de.calendar.utils.CalendarUtils;
 
-import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.validation.constraints.Size;
@@ -22,12 +21,11 @@ import java.time.LocalDateTime;
 @Embeddable
 public class Token implements Serializable {
 
-    @Column(unique = true)
-    @Basic
+    @Column(unique = true, name = "c_value")
     @Size(min = 24, max = 48)
     private String value;
 
-    @Basic
+    @Column(name = "c_expiringDate")
     private String expiringDate;
 
     @Deprecated

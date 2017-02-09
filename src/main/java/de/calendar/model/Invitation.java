@@ -4,11 +4,10 @@
 
 package de.calendar.model;
 
-import java.io.Serializable;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
+import java.io.Serializable;
 
 /**
  * Das sind die InvitationTokens zum beitreten eines Events
@@ -16,6 +15,7 @@ import javax.persistence.Id;
  */
 
 @Entity
+@Table(name = "c_invitation")
 public class Invitation implements Serializable { 
 
     @Id
